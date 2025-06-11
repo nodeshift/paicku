@@ -41,4 +41,4 @@ EXAMPLES
   $ paicku inspect buildpacksio/pack
 ```
 
-_See code: [src/commands/inspect/index.ts](https://github.com/nodeshift/paicku/blob/v0.0.6/src/commands/inspect/index.ts)_
+_See code: [src/commands/inspect/index.ts](https://github.com/nodeshift/paicku/blob/v0.0.7/src/commands/inspect/index.ts)_

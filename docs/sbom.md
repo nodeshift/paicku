@@ -36,4 +36,4 @@ EXAMPLES
   $ paicku sbom download buildpacksio/pack
 ```
 
-_See code: [src/commands/sbom/download.ts](https://github.com/nodeshift/paicku/blob/v0.0.6/src/commands/sbom/download.ts)_
+_See code: [src/commands/sbom/download.ts](https://github.com/nodeshift/paicku/blob/v0.0.7/src/commands/sbom/download.ts)_
