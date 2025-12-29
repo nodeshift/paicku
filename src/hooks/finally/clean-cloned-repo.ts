@@ -2,17 +2,24 @@ import {Hook} from '@oclif/core'
 import fs from 'node:fs'
 import path from 'node:path'
 
+import {CLONED_REPOS_TMP_DIRNAME} from '../../constants/index.js'
+
 const hook: Hook.Finally = async function (options) {
   if (options.id !== 'build') {
     return
   }
 
-  const tmpClonedRepos = path.join(options.config.cacheDir, 'tmp-cloned-repos')
+  const tmpClonedRepos = path.join(options.config.cacheDir, CLONED_REPOS_TMP_DIRNAME)
+
+  if (!fs.existsSync(tmpClonedRepos)) {
+    return
+  }
+
   for (const repoDir of fs.readdirSync(tmpClonedRepos)) {
     try {
       fs.rmSync(path.join(tmpClonedRepos, repoDir), {force: true, recursive: true})
     } catch (error) {
-      if (error! instanceof Error) {
+      if (!(error instanceof Error)) {
         options.context.error(`Unknown error while deleting cached dir: ${repoDir}  \n error: ${error}`)
       }
 

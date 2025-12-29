@@ -115,6 +115,10 @@ export function parseFlags(flags: Flags): string[] {
   for (const [key, value] of Object.entries(flags)) {
     if (typeof value === 'boolean' && value === true) {
       flagsArray.push(`--${key}`)
+    } else if (Array.isArray(value)) {
+      for (const item of value) {
+        flagsArray.push(`--${key}`, item.toString())
+      }
     } else {
       flagsArray.push(`--${key}`, value.toString())
     }
@@ -255,8 +259,19 @@ export async function filterByInstalledApps(apps: string[], platform: string): P
     }
 
     case 'win32': {
-      execFileSync('where', apps)
-      break
+      try {
+        const result = apps.filter((app) => {
+          try {
+            execFileSync('where', [app], {stdio: 'pipe'})
+            return true
+          } catch {
+            return false
+          }
+        })
+        return result
+      } catch {
+        return []
+      }
     }
   }
 
@@ -316,7 +331,7 @@ export async function configureContainerRuntime(
   return {envs: {}, flags: []}
 }
 
-async function configurePodmanOnLinuxAmd64(): Promise<{envs: Envs; flags: string[]}> {
+function configurePodmanOnLinuxAmd64(): {envs: Envs; flags: string[]} {
   const podmandInfo = execFileSync('podman', ['info', '-f', '{{.Host.RemoteSocket.Path}}'], {
     encoding: 'utf8',
   })
@@ -329,11 +344,11 @@ async function configurePodmanOnLinuxAmd64(): Promise<{envs: Envs; flags: string
   }
 }
 
-async function configureDockerOnLinuxAmd64(): Promise<{envs: Envs; flags: string[]}> {
+function configureDockerOnLinuxAmd64(): {envs: Envs; flags: string[]} {
   return {envs: {}, flags: []}
 }
 
-async function configureDockerOnDarwinArm64(): Promise<{envs: Envs; flags: string[]}> {
+function configureDockerOnDarwinArm64(): {envs: Envs; flags: string[]} {
   return {envs: {}, flags: []}
 }
 

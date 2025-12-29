@@ -60,7 +60,7 @@
     "commands": "./dist/commands",
     "hooks": {
       "finally": [
-        "./src/hooks/finally/clean-cloned-repo"
+        "./dist/hooks/finally/clean-cloned-repo"
       ],
       "prerun": "./dist/hooks/prerun/download-pack"
     },

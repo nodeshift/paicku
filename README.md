@@ -1,6 +1,6 @@
 # paicku
 
-A CLI for containerizing applications using buidpacks
+A CLI for containerizing applications using buildpacks
 
 [![oclif](https://img.shields.io/badge/cli-oclif-brightgreen.svg)](https://oclif.io)
 [![Version](https://img.shields.io/npm/v/paicku.svg)](https://npmjs.org/package/paicku)
@@ -40,7 +40,7 @@ Install the required Node.js modules
 npm i
 ```
 
-### Run CLI in developemnt mode:
+### Run CLI in development mode:
 
 Use the following command to run the CLI in development mode:
 
@@ -69,25 +69,25 @@ Note: You must rebuild every time you make changes to the source code
 To run unit tests:
 
 ```
-npm run test:unit
+npm run unit:test
 ```
 
 To run unit tests in debug mode (e.g., for using .only or extended execution time):
 
 ```
-npm run test:unit:debug
+npm run unit:test:debug
 ```
 
 To run integration tests:
 
 ```
-npm run test:integration
+npm run integration:test
 ```
 
 To run integration tests in debug mode:
 
 ```
-npm run test:integration:debug
+npm run integration:test:debug
 ```
 
 For more info, refer to the [OCLI documentation](https://oclif.io/docs/introduction)

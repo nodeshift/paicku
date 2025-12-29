@@ -92,6 +92,14 @@ describe('utils', () => {
         got: {},
         want: [],
       },
+      {
+        got: {buildpack: ['bp1', 'bp2'], verbose: true},
+        want: ['--buildpack', 'bp1', '--buildpack', 'bp2', '--verbose'],
+      },
+      {
+        got: {env: ['VAR1=value1', 'VAR2=value2']},
+        want: ['--env', 'VAR1=value1', '--env', 'VAR2=value2'],
+      },
     ]
 
     for (const test of tests) {
