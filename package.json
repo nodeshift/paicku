@@ -8,6 +8,7 @@
   },
   "bugs": "https://github.com/nodeshift/paicku/issues",
   "dependencies": {
+    "@inquirer/prompts": "^8.1.0",
     "@oclif/core": "^4",
     "@oclif/plugin-help": "^6",
     "adm-zip": "^0.5.16",

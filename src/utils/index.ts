@@ -1,3 +1,4 @@
+import {confirm} from '@inquirer/prompts'
 import {lookpath} from 'lookpath'
 import {execFileSync, spawn} from 'node:child_process'
 import {existsSync, lstatSync, mkdirSync, mkdtempSync} from 'node:fs'
@@ -88,6 +89,12 @@ export async function runPack(
     process.env[key] = value
   }
 
+  let envsString = ''
+  for (const [key, value] of Object.entries(envs)) {
+    envsString += `${key}=${value} `
+  }
+
+  console.log(`Running pack with args: ${envsString} ${flargs.join(' ')}`)
   const bin = spawn(packBinFilepath, flargs)
 
   for await (const chunk of bin.stdout) {
@@ -340,7 +347,7 @@ function configurePodmanOnLinuxAmd64(): {envs: Envs; flags: string[]} {
 
   return {
     envs: {DOCKER_HOST: `unix://${podmandInfo.trim()}`},
-    flags: ['--docker-host', 'inherit'],
+    flags: [],
   }
 }
 
@@ -375,11 +382,12 @@ async function configurePodmanOnDarwinArm64(console: {
   }
 
   const podmanMachineUri = url.parse(listPodmanConnections.split(' ')[0])
-  const identity = listPodmanConnections.split(' ')[1]
+  const identityFilepath = listPodmanConnections.split(' ')[1]
 
   if (
     !podmanMachineUri ||
-    !identity ||
+    !identityFilepath ||
+    !podmanMachineUri.port ||
     !podmanMachineUri.protocol ||
     !podmanMachineUri.host ||
     !podmanMachineUri.auth
@@ -388,16 +396,58 @@ async function configurePodmanOnDarwinArm64(console: {
     return {envs: {}, flags: []}
   }
 
-  execFileSync('ssh-add', ['-k', identity])
+  let isSshKeyLoaded = false
+  let listLoadedSshKeys = ''
+  try {
+    listLoadedSshKeys = execFileSync('ssh-add', ['-l'], {encoding: 'utf8'})
+    const keyInfo = execFileSync('ssh-keygen', ['-l', '-f', identityFilepath], {encoding: 'utf8'})
+    if (listLoadedSshKeys.includes(keyInfo.split(' ')[1])) {
+      isSshKeyLoaded = true
+    }
+  } catch {
+    listLoadedSshKeys = ''
+  }
+
+  if (!isSshKeyLoaded) {
+    const loadSshKeyAnswer = await confirm({
+      default: false,
+      message: 'SSH key for accessing Podman machine is not loaded. Would you like to load it?',
+    })
+
+    if (loadSshKeyAnswer) {
+      execFileSync('ssh-add', ['-k', identityFilepath])
+    } else {
+      console.error('SSH key is required to access Podman machine. Aborting configuration.')
+      return {envs: {}, flags: []}
+    }
+  }
 
   // We check on the known_hosts file if the host is already there
   // if not we fall to the catch block and we add it through ssh command.
   try {
     execFileSync('ssh-keygen', ['-F', `[${podmanMachineUri.hostname}]:${podmanMachineUri.port}`])
   } catch {
-    const podmanMachineBaseUri = `${podmanMachineUri.protocol}//${podmanMachineUri.auth}@${podmanMachineUri.host}`
+    const addHostAnswer = await confirm({
+      default: true,
+      message: `The Podman machine host is not in your known_hosts file. Do you want to add it automatically?`,
+    })
+    if (!addHostAnswer) {
+      console.error('Podman machine host is required to be in known_hosts file. Aborting configuration.')
+      return {envs: {}, flags: []}
+    }
 
-    const sshBin = spawn('ssh', ['-i', identity, podmanMachineBaseUri, '-o', 'StrictHostKeyChecking=no', 'exit'])
+    const podmanMachineBaseUri = `${podmanMachineUri.auth}@${podmanMachineUri.hostname}`
+
+    const sshBin = spawn('ssh', [
+      '-i',
+      identityFilepath,
+      '-p',
+      podmanMachineUri.port,
+      '-o',
+      'StrictHostKeyChecking=accept-new',
+      podmanMachineBaseUri,
+      'exit',
+    ])
 
     for await (const chunk of sshBin.stdout) {
       console.log(chunk.toString())
@@ -420,6 +470,6 @@ async function configurePodmanOnDarwinArm64(console: {
 
   return {
     envs: {DOCKER_HOST: podmanMachineUri.href},
-    flags: ['--docker-host', 'inherit'],
+    flags: [],
   }
 }

@@ -48,6 +48,12 @@ Use the following command to run the CLI in development mode:
 ./bin/dev.js
 ```
 
+or to build an app
+
+```
+./bin/dev.js build test/integration/testdata/nodejs_simple_app --container-runtime podman
+```
+
 ### Run CLI in production mode:
 
 To run the CLI in production mode, you need to build the application first. Run the build command:

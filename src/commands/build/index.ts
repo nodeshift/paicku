@@ -265,7 +265,7 @@ export default class Build extends Command {
     }
 
     if (!flags.builder) {
-      flags.builder = 'paketocommunity/builder-ubi8-base'
+      flags.builder = 'paketobuildpacks/builder-ubi8-base'
       this.warn(`You haven't specified a builder, using the default one: ${flags.builder}`)
     }
 
