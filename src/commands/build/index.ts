@@ -220,7 +220,7 @@ export default class Build extends Command {
       const availableContainerRuntimes = await filterByInstalledApps([flags['container-runtime']], platform)
 
       if (availableContainerRuntimes.length === 0) {
-        this.error(`${flags['container-runtime']} is not install.`)
+        this.error(`${flags['container-runtime']} is not installed.`)
       }
     } else {
       const availableContainerRuntimes = await filterByInstalledApps(CONTAINER_RUNTIMES_IN_PRIORITY, platform)

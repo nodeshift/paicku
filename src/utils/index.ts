@@ -359,6 +359,7 @@ function configureDockerOnDarwinArm64(): {envs: Envs; flags: string[]} {
   return {envs: {}, flags: []}
 }
 
+// eslint-disable-next-line complexity
 async function configurePodmanOnDarwinArm64(console: {
   error: (message: string, options?: {exit: number}) => void
   log: (message: string) => void
@@ -377,7 +378,7 @@ async function configurePodmanOnDarwinArm64(console: {
     .find((line) => line.includes('root'))
 
   if (!listPodmanConnections) {
-    console.error('Failed configuring podman')
+    console.error('Failed configuring podman: Ensure you have installed podman correctly.')
     return {envs: {}, flags: []}
   }
 
@@ -411,21 +412,24 @@ async function configurePodmanOnDarwinArm64(console: {
   if (!isSshKeyLoaded) {
     const loadSshKeyAnswer = await confirm({
       default: false,
-      message: 'SSH key for accessing Podman machine is not loaded. Would you like to load it?',
+      message: 'Would you like to add Podman key to ssh-agent for accessing Podman machine?',
     })
 
     if (loadSshKeyAnswer) {
       execFileSync('ssh-add', ['-k', identityFilepath])
     } else {
-      console.error('SSH key is required to access Podman machine. Aborting configuration.')
+      console.error('SSH key is required to access Podman machine. Please add it to ssh-agent to continue.')
       return {envs: {}, flags: []}
     }
   }
 
+  // pack embedded SSH dialer only ever reads the default ~/.ssh/known_hosts file
+  const knownHostsPath = path.join(process.env.HOME || '~', '.ssh', 'known_hosts')
+
   // We check on the known_hosts file if the host is already there
   // if not we fall to the catch block and we add it through ssh command.
   try {
-    execFileSync('ssh-keygen', ['-F', `[${podmanMachineUri.hostname}]:${podmanMachineUri.port}`])
+    execFileSync('ssh-keygen', ['-F', `[${podmanMachineUri.hostname}]:${podmanMachineUri.port}`, '-f', knownHostsPath])
   } catch {
     const addHostAnswer = await confirm({
       default: true,
@@ -436,34 +440,54 @@ async function configurePodmanOnDarwinArm64(console: {
       return {envs: {}, flags: []}
     }
 
-    const podmanMachineBaseUri = `${podmanMachineUri.auth}@${podmanMachineUri.hostname}`
-
-    const sshBin = spawn('ssh', [
-      '-i',
-      identityFilepath,
-      '-p',
-      podmanMachineUri.port,
-      '-o',
-      'StrictHostKeyChecking=accept-new',
-      podmanMachineBaseUri,
-      'exit',
-    ])
-
-    for await (const chunk of sshBin.stdout) {
-      console.log(chunk.toString())
+    // Get the fingerprint with ssh command from the Podman machine host.
+    let podmanMachineSshFingerprint: string
+    try {
+      console.log('Fetching secure fingerprint directly from Podman machine host...')
+      podmanMachineSshFingerprint = execFileSync(
+        'podman',
+        ['machine', 'ssh', 'ssh-keygen -l -f /etc/ssh/ssh_host_ecdsa_key.pub'],
+        {encoding: 'utf8'},
+      )
+    } catch (error) {
+      console.error(`Failed to fetch fingerprint from Podman machine host: ${error}`)
+      return {envs: {}, flags: []}
     }
 
-    let errorChunks = ''
-    for await (const errorChunk of sshBin.stderr) {
-      errorChunks += errorChunk
+    // Get the fingerprint with ssh-keyscan from the Podman machine host.
+    let podmanPublicKey: string
+    try {
+      podmanPublicKey = execFileSync(
+        'ssh-keyscan',
+        ['-t', 'ecdsa', '-p', podmanMachineUri.port || '22', podmanMachineUri.hostname || '127.0.0.1'],
+        {encoding: 'utf8'},
+      )
+    } catch (error) {
+      console.error(`Failed to scan Podman machine host fingerprint: ${error}`)
+      return {envs: {}, flags: []}
     }
 
-    const exitCode = await new Promise<number>((resolve) => {
-      sshBin.on('close', resolve)
-    })
+    let podmanPublicKeyToFingerprint: string
+    try {
+      podmanPublicKeyToFingerprint = execFileSync('ssh-keygen', ['-lf', '-'], {
+        encoding: 'utf8',
+        input: podmanPublicKey.split('\n')[1],
+      })
+    } catch (error) {
+      console.error(`Failed to awk fingerprint: ${error}`)
+      return {envs: {}, flags: []}
+    }
 
-    if (exitCode) {
-      console.error(errorChunks.toString())
+    if (podmanPublicKeyToFingerprint.split(' ')[1] !== podmanMachineSshFingerprint.split(' ')[1]) {
+      console.error('Podman machine host fingerprint does not match the public key fingerprint.')
+      return {envs: {}, flags: []}
+    }
+
+    try {
+      const fs = await import('node:fs/promises')
+      await fs.appendFile(knownHostsPath, podmanPublicKey)
+    } catch (error) {
+      console.error(`Failed to write to known_hosts file: ${error}`)
       return {envs: {}, flags: []}
     }
   }
