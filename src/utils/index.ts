@@ -90,17 +90,16 @@ export async function runPack({
 }): Promise<void> {
   const packBinFilepath = path.join(cacheDir, 'pack')
 
-  for (const [key, value] of Object.entries(envs)) {
-    process.env[key] = value
+  const isVerbose = flargs.includes('--verbose') || flargs.includes('-v')
+  if (isVerbose) {
+    console.log(
+      `Running pack with args: ${Object.entries(envs)
+        .map(([key, value]) => `${key}=${value}`)
+        .join(' ')} ${packBinFilepath} ${flargs.join(' ')}`,
+    )
   }
 
-  let envsString = ''
-  for (const [key, value] of Object.entries(envs)) {
-    envsString += `${key}=${value} `
-  }
-
-  console.log(`Running pack with args: ${envsString} ${flargs.join(' ')}`)
-  const bin = spawn(packBinFilepath, flargs)
+  const bin = spawn(packBinFilepath, flargs, {env: {...process.env, ...envs}})
 
   for await (const chunk of bin.stdout) {
     console.log(chunk.toString())
@@ -363,7 +362,7 @@ function configurePodmanOnLinuxAmd64(): {envs: Envs; flags: string[]} {
 
   return {
     envs: {DOCKER_HOST: `unix://${podmandInfo.trim()}`},
-    flags: [],
+    flags: ['--docker-host', 'inherit'],
   }
 }
 
@@ -526,6 +525,6 @@ async function configurePodmanOnDarwinArm64(console: {
 
   return {
     envs: {DOCKER_HOST: podmanMachineUri.href},
-    flags: [],
+    flags: ['--docker-host', 'inherit'],
   }
 }

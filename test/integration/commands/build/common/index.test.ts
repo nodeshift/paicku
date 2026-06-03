@@ -9,6 +9,7 @@ const ROOT_DIR = path.dirname(path.join(fileURLToPath(import.meta.url), '../../.
 const skip = process.platform === 'win32'
 const it = skip ? mochaIt.skip : mochaIt
 
+
 describe('build', () => {
   it('It should build a Nodejs app in docker', async () => {
     const imageName = `${crypto.randomUUID()}`
@@ -17,7 +18,7 @@ describe('build', () => {
       'build',
       imageName,
       '--builder',
-      'paketobuildpacks/builder-jammy-base',
+      'docker.io/paketobuildpacks/builder-jammy-base',
       '--path',
       `${ROOT_DIR}/integration/testdata/nodejs_simple_app`,
       '--container-runtime',
@@ -36,7 +37,7 @@ describe('build', () => {
       'build',
       imageName,
       '--builder',
-      'paketobuildpacks/builder-jammy-base',
+      'docker.io/paketobuildpacks/builder-jammy-base',
       '--path',
       `${ROOT_DIR}/integration/testdata/nodejs_simple_app`,
       '--container-runtime',
