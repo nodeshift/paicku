@@ -31,11 +31,11 @@ export default class Inspect extends Command {
 
     const flagsArray = parseFlags(flags)
 
-    await runPack(
-      ['inspect', args.imageName, ...flagsArray],
-      {error: this.error.bind(this), log: this.log.bind(this)},
-      {},
-      this.config.cacheDir,
-    )
+    await runPack({
+      cacheDir: this.config.cacheDir,
+      console: {error: this.error.bind(this), log: this.log.bind(this)},
+      envs: {},
+      flargs: ['inspect', args.imageName, ...flagsArray],
+    })
   }
 }

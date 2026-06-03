@@ -22,11 +22,11 @@ export default class BuilderSuggest extends Command {
 
     const flagsArray = parseFlags(flags)
 
-    await runPack(
-      ['builder', 'suggest', ...flagsArray],
-      {error: this.error.bind(this), log: this.log.bind(this)},
-      {},
-      this.config.cacheDir,
-    )
+    await runPack({
+      cacheDir: this.config.cacheDir,
+      console: {error: this.error.bind(this), log: this.log.bind(this)},
+      envs: {},
+      flargs: ['builder', 'suggest', ...flagsArray],
+    })
   }
 }

@@ -74,15 +74,20 @@ export function getPackNamingConvention(arch: string, platform: string): string 
   throw new Error(`Unsupported platform/architecture: ${platform}/${arch}`)
 }
 
-export async function runPack(
-  flargs: string[],
+export async function runPack({
+  cacheDir,
+  console,
+  envs,
+  flargs,
+}: {
+  cacheDir: string
   console: {
     error: (message: string, options?: {exit: number}) => void
     log: (message: string) => void
-  },
-  envs: Envs,
-  cacheDir: string,
-): Promise<void> {
+  }
+  envs: Envs
+  flargs: string[]
+}): Promise<void> {
   const packBinFilepath = path.join(cacheDir, 'pack')
 
   for (const [key, value] of Object.entries(envs)) {

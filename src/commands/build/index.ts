@@ -283,11 +283,11 @@ export default class Build extends Command {
 
     this.log(`Building image ${args.imageName} with builder ${flags.builder}`)
 
-    await runPack(
-      ['build', args.imageName, ...flagsArray, ...packConfiguration.flags],
-      {error: this.error.bind(this), log: this.log.bind(this)},
+    await runPack({
+      cacheDir: this.config.cacheDir,
+      console: {error: this.error.bind(this), log: this.log.bind(this)},
       envs,
-      this.config.cacheDir,
-    )
+      flargs: ['build', args.imageName, ...flagsArray, ...packConfiguration.flags],
+    })
   }
 }
