@@ -6,10 +6,17 @@ import os from 'node:os'
 import path from 'node:path'
 import {Readable} from 'node:stream'
 import {finished} from 'node:stream/promises'
+import {fileURLToPath} from 'node:url'
 import * as tar from 'tar'
 
-import {PACK_VERSION} from '../../constants/index.js'
 import {getPackUrl} from '../../utils/index.js'
+
+type toolsConfig = {
+  pack?: string
+}
+
+const toolsConfigPath = fileURLToPath(new URL('../../../tools.json', import.meta.url))
+const DEFAULT_PACK_VERSION = getDefaultPackVersion()
 
 const hook: Hook<'prerun'> = async function () {
   const {cacheDir} = this.config
@@ -27,7 +34,7 @@ const hook: Hook<'prerun'> = async function () {
   const compression = platform === 'win32' ? 'zip' : 'tgz'
 
   const {
-    env: {PAICKU_PACK_VERSION: packVersion = PACK_VERSION},
+    env: {PAICKU_PACK_VERSION: packVersion = DEFAULT_PACK_VERSION},
   } = process
 
   const packUrl = getPackUrl(platform, arch, packVersion)
@@ -64,6 +71,17 @@ const hook: Hook<'prerun'> = async function () {
 
   fs.unlinkSync(path.join(cacheDir, `pack.${compression}`))
   fs.unlinkSync(path.join(cacheDir, `pack.${compression}.sha256`))
+}
+
+function getDefaultPackVersion(): string {
+  const toolsConfig = JSON.parse(fs.readFileSync(toolsConfigPath, 'utf8')) as toolsConfig
+  const {pack: packVersion} = toolsConfig
+
+  if (!packVersion) {
+    throw new Error('Missing "pack" in tools.json')
+  }
+
+  return packVersion
 }
 
 function checksumFile(hashName: string, path: string): Promise<string> {
