@@ -2,6 +2,7 @@ import {expect} from 'chai'
 
 import {Flags} from '../../../src/types/index.js'
 import {
+  filterByInstalledApps,
   getPackNamingConvention,
   gitIsInstalled,
   hasRegistryPrefix,
@@ -182,5 +183,15 @@ describe('utils', () => {
       const result = sortArrayBasedOnOrder(test.got, test.order)
       expect(result).to.deep.equal(test.want)
     }
+  })
+
+  it('Filters apps based on what is installed', async () => {
+    const result = await filterByInstalledApps(['git', 'non-existent-binary-for-paicku-tests'], 'linux')
+    expect(result).to.deep.equal(['git'])
+  })
+
+  it('Returns empty list for unsupported platforms', async () => {
+    const result = await filterByInstalledApps(['git'], 'unsupported-platform')
+    expect(result).to.deep.equal([])
   })
 })
