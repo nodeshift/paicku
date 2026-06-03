@@ -4,6 +4,7 @@ import {Flags} from '../../../src/types/index.js'
 import {
   getPackNamingConvention,
   gitIsInstalled,
+  hasRegistryPrefix,
   parseFlags,
   parseURL,
   sortArrayBasedOnOrder,
@@ -75,6 +76,22 @@ describe('utils', () => {
     for (const test of tests) {
       const result = getPackNamingConvention(test.got.arch, test.got.platform)
       expect(result).to.be.equal(test.want)
+    }
+  })
+
+  it('detects a registry prefix on builder images', () => {
+    const tests = [
+      {got: 'docker.io/paketobuildpacks/builder-ubi8-base', want: true},
+      {got: 'index.docker.io/paketobuildpacks/builder-ubi8-base', want: true},
+      {got: 'ghcr.io/paketo-buildpacks/builder-jammy-base', want: true},
+      {got: 'localhost:5000/builder', want: true},
+      {got: 'registry.example.com:8080/builder', want: true},
+      {got: 'paketobuildpacks/builder-jammy-base', want: false},
+      {got: 'builder-ubi', want: false},
+    ]
+
+    for (const test of tests) {
+      expect(hasRegistryPrefix(test.got)).to.equal(test.want)
     }
   })
 

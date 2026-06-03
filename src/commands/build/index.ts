@@ -2,12 +2,13 @@ import {Args, Command, Flags} from '@oclif/core'
 import os from 'node:os'
 import path from 'node:path'
 
-import {CONTAINER_RUNTIMES_IN_PRIORITY} from '../../constants/index.js'
+import {CONTAINER_RUNTIMES_IN_PRIORITY, DEFAULT_BUILDER_IMAGE} from '../../constants/index.js'
 import {globalFlags} from '../../global/flags.js'
 import {
   cloneRepo,
   configureContainerRuntime,
   filterByInstalledApps,
+  hasRegistryPrefix,
   parseFlags,
   parseGitRemoteRepo,
   runPack,
@@ -27,7 +28,7 @@ export default class Build extends Command {
       description: 'Build an app with a random image-name and default builder',
     },
     {
-      command: `<%= config.bin %> <%= command.id %> image-name --builder builder-ubi8-base`,
+      command: `<%= config.bin %> <%= command.id %> image-name --builder docker.io/builder-ubi8-base`,
       description: 'Build and app with a specific image-name and builder',
     },
     {
@@ -35,7 +36,7 @@ export default class Build extends Command {
       description: 'Build an app from a remote git repository with specifying a sub-directory.',
     },
     {
-      command: `<%= config.bin %> <%= command.id %> image-name --builder builder-ubi8-base --path /path/to/app`,
+      command: `<%= config.bin %> <%= command.id %> image-name --builder docker.io/builder-ubi8-base --path /path/to/app`,
       description: 'Build an app with a specific image-name and builder with a specific local path',
     },
   ]
@@ -80,7 +81,6 @@ export default class Build extends Command {
     }),
     'default-process': Flags.string({
       char: 'D',
-      default: 'web',
       description: 'Set the default process type',
     }),
     descriptor: Flags.string({
@@ -265,8 +265,12 @@ export default class Build extends Command {
     }
 
     if (!flags.builder) {
-      flags.builder = 'paketobuildpacks/builder-ubi8-base'
+      flags.builder = DEFAULT_BUILDER_IMAGE
       this.warn(`You haven't specified a builder, using the default one: ${flags.builder}`)
+    }
+
+    if (!hasRegistryPrefix(flags.builder)) {
+      this.error(`The builder "${flags.builder}" must be prefixed with a registry (e.g. "docker.io/" or "ghcr.io/").`)
     }
 
     const {context, gitURL, isGitRemoteRepo} = await parseGitRemoteRepo(flags.path)
