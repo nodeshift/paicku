@@ -115,6 +115,17 @@ export async function runPack(
   }
 }
 
+// Returns true when the builder image is explicitly prefixed with a registry host.
+export function hasRegistryPrefix(builder: string): boolean {
+  const firstSlash = builder.indexOf('/')
+  if (firstSlash === -1) {
+    return false
+  }
+
+  const firstSegment = builder.slice(0, firstSlash)
+  return firstSegment === 'localhost' || firstSegment.includes('.') || firstSegment.includes(':')
+}
+
 export function parseFlags(flags: Flags): string[] {
   // iterate over the flags and add them to an array
   const flagsArray: string[] = []
@@ -364,21 +375,36 @@ async function configurePodmanOnDarwinArm64(console: {
   error: (message: string, options?: {exit: number}) => void
   log: (message: string) => void
 }): Promise<{envs: Envs; flags: string[]}> {
-  const podmandSystemConnectionLsCommand = execFileSync(
-    'podman',
-    ['system', 'connection', 'ls', '--format="{{.URI}} {{.Identity}}"'],
-    {
+  let listPodmanConnections
+  try {
+    const podmandSystemConnectionLsCommand = execFileSync(
+      'podman',
+      ['system', 'connection', 'ls', '--format="{{.URI}} {{.Identity}}"'],
+      {
+        encoding: 'utf8',
+      },
+    )
+
+    listPodmanConnections = podmandSystemConnectionLsCommand
+      .split('\n')
+      .map((line) => line.slice(1, -1))
+      .find((line) => line.includes('root'))
+
+    if (!listPodmanConnections) {
+      console.error('Ensure you have installed podman correctly.')
+      return {envs: {}, flags: []}
+    }
+  } catch {
+    console.error('Ensure you have installed podman correctly.')
+    return {envs: {}, flags: []}
+  }
+
+  try {
+    execFileSync('podman', ['container', 'ls'], {
       encoding: 'utf8',
-    },
-  )
-
-  const listPodmanConnections = podmandSystemConnectionLsCommand
-    .split('\n')
-    .map((line) => line.slice(1, -1))
-    .find((line) => line.includes('root'))
-
-  if (!listPodmanConnections) {
-    console.error('Failed configuring podman: Ensure you have installed podman correctly.')
+    })
+  } catch {
+    console.error('Ensure you have installed podman correctly.')
     return {envs: {}, flags: []}
   }
 
@@ -391,9 +417,10 @@ async function configurePodmanOnDarwinArm64(console: {
     !podmanMachineUri.port ||
     !podmanMachineUri.protocol ||
     !podmanMachineUri.host ||
-    !podmanMachineUri.auth
+    !podmanMachineUri.auth ||
+    !podmanMachineUri.pathname
   ) {
-    console.error('Failed configuring podman')
+    console.error('Ensure you have installed podman correctly.')
     return {envs: {}, flags: []}
   }
 
@@ -474,7 +501,7 @@ async function configurePodmanOnDarwinArm64(console: {
         input: podmanPublicKey.split('\n')[1],
       })
     } catch (error) {
-      console.error(`Failed to awk fingerprint: ${error}`)
+      console.error(`Failed to get fingerprint: ${error}`)
       return {envs: {}, flags: []}
     }
 
