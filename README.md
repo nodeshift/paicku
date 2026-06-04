@@ -1,6 +1,6 @@
 # paicku
 
-A CLI for containerizing applications using buildpacks
+Paicku is a wrapper of [pack CLI](https://github.com/buildpacks/pack) for containerizing applications using buildpacks, in a little bit easier way.
 
 [![oclif](https://img.shields.io/badge/cli-oclif-brightgreen.svg)](https://oclif.io)
 [![Version](https://img.shields.io/npm/v/paicku.svg)](https://npmjs.org/package/paicku)
@@ -10,27 +10,65 @@ A CLI for containerizing applications using buildpacks
 
 ```sh-session
 $ npm install -g paicku
-$ paicku build .
 ```
 
-In case you don't want to install paicku globally, use npx instead
+Go to your application directory
+
+```
+cd ./my-node-app-dir
+```
+
+```
+$ paicku build
+```
+
+You can also use npx
 
 ```sh-session
-$ npx paicku build .
+$ npx paicku build
+```
+
+The above commands will output an container image to your registry with a random name.
+
+If you want to specify a name, you can do
+
+```sh-session
+$ npx paicku build my-image-name
+```
+
+or if you want to specify a path
+
+```sh-session
+ npx paicku build my-image-name --path /path/to/my/app/dir
+```
+
+Paicku supports all the essentail commands that a developer might need. For more information do
+
+```sh-session
+$ npx paicku --help
 ```
 
 # Available commands
 
 <!-- commands -->
+
 # Command Topics
 
-* [`paicku build`](docs/build.md) - Build an image
-* [`paicku builder`](docs/builder.md) - Interact with builders
-* [`paicku help`](docs/help.md) - Display help for paicku.
-* [`paicku inspect`](docs/inspect.md) - Show information about a built app image
-* [`paicku sbom`](docs/sbom.md) - Interact with SBoM
+- [`paicku build`](docs/build.md) - Build an image
+- [`paicku builder`](docs/builder.md) - Interact with builders
+- [`paicku help`](docs/help.md) - Display help for paicku.
+- [`paicku inspect`](docs/inspect.md) - Show information about a built app image
+- [`paicku sbom`](docs/sbom.md) - Interact with SBoM
 
 <!-- commandsstop -->
+
+# Examples
+
+## build an app using podman
+
+```
+npx paicku build . --container-runtime podman
+```
 
 ## Development
 
@@ -73,6 +111,7 @@ Note: You must rebuild every time you make changes to the source code
 ### Tests
 
 To run all the tests:
+
 ```
 npm run test
 ```
