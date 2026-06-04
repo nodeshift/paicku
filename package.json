@@ -82,10 +82,13 @@
     "posttest": "npm run lint",
     "prepack": "npm run build && oclif manifest && oclif readme --multi",
     "test": "npm run unit:test && npm run integration:test",
-    "integration:test": "mocha --forbid-only \"test/integration/**/*.test.ts\"",
-    "integration:test:debug": "mocha \"test/integration/**/*.test.ts\"",
+    "test:coverage": "c8 npm run test",
     "unit:test": "mocha --forbid-only \"test/unit/**/*.test.ts\"",
     "unit:test:debug": "mocha --timeout 0 \"test/unit/**/*.test.ts\"",
+    "unit:test:coverage": "c8 npm run unit:test",
+    "integration:test": "mocha --forbid-only \"test/integration/**/*.test.ts\"",
+    "integration:test:debug": "mocha \"test/integration/**/*.test.ts\"",
+    "integration:test:coverage": "c8 npm run integration:test",
     "version": "oclif readme && git add README.md"
   },
   "types": "dist/index.d.ts"
