@@ -70,24 +70,29 @@ Then, execute the CLI:
 
 Note: You must rebuild every time you make changes to the source code
 
-### Running tests
+### Tests
 
-To run unit tests:
+To run all the tests:
+```
+npm run test
+```
+
+To run only the unit tests:
 
 ```
 npm run unit:test
+```
+
+To run only the integration tests:
+
+```
+npm run integration:test
 ```
 
 To run unit tests in debug mode (e.g., for using .only or extended execution time):
 
 ```
 npm run unit:test:debug
-```
-
-To run integration tests:
-
-```
-npm run integration:test
 ```
 
 To run integration tests in debug mode:
