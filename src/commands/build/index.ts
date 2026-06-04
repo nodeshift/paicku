@@ -16,13 +16,15 @@ import {
 } from '../../utils/index.js'
 
 export default class Build extends Command {
-  static args = {
+  static readonly args = {
     imageName: Args.string({description: 'Name of the output image', required: false}),
   }
 
-  static description = 'Build an image'
+  static readonly description = 'Build an image'
 
-  static examples = [
+  static readonly enableJsonFlag = true
+
+  static readonly examples = [
     {
       command: `<%= config.bin %> <%= command.id %>`,
       description: 'Build an app with a random image-name and default builder',
@@ -41,7 +43,7 @@ export default class Build extends Command {
     },
   ]
 
-  static flags = {
+  static readonly flags = {
     ...globalFlags,
     builder: Flags.string({char: 'B', description: 'Builder image', required: false}),
     buildpack: Flags.string({
