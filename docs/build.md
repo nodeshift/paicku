@@ -28,7 +28,7 @@ FLAGS
       Builder image
 
   -D, --default-process=<value>
-      [default: web] Set the default process type
+      Set the default process type
 
   -b, --buildpack=<value>...
       Buildpack to use. One of:
@@ -196,7 +196,7 @@ EXAMPLES
 
   Build and app with a specific image-name and builder
 
-    $ paicku build image-name --builder builder-ubi8-base
+    $ paicku build image-name --builder docker.io/builder-ubi8-base
 
   Build an app from a remote git repository with specifying a sub-directory.
 
@@ -204,7 +204,7 @@ EXAMPLES
 
   Build an app with a specific image-name and builder with a specific local path
 
-    $ paicku build image-name --builder builder-ubi8-base --path /path/to/app
+    $ paicku build image-name --builder docker.io/builder-ubi8-base --path /path/to/app
 ```
 
-_See code: [src/commands/build/index.ts](https://github.com/nodeshift/nodeshift/blob/v0.0.3/src/commands/build/index.ts)_
+_See code: [src/commands/build/index.ts](https://github.com/nodeshift/paicku/blob/v0.0.7/src/commands/build/index.ts)_
