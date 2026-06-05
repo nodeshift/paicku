@@ -135,8 +135,10 @@ export function parseFlags(flags: Flags): string[] {
   const flagsArray: string[] = []
 
   for (const [key, value] of Object.entries(flags)) {
-    if (typeof value === 'boolean' && value === true) {
-      flagsArray.push(`--${key}`)
+    if (typeof value === 'boolean') {
+      if (value) {
+        flagsArray.push(`--${key}`)
+      }
     } else if (Array.isArray(value)) {
       for (const item of value) {
         flagsArray.push(`--${key}`, item.toString())

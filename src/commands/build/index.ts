@@ -3,7 +3,7 @@ import os from 'node:os'
 import path from 'node:path'
 
 import {CONTAINER_RUNTIMES_IN_PRIORITY, DEFAULT_BUILDER_IMAGE} from '../../constants/index.js'
-import {globalFlags} from '../../global/flags.js'
+import {globalFlags} from '../../flargs/global.js'
 import {
   cloneRepo,
   configureContainerRuntime,

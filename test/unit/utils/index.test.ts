@@ -104,7 +104,7 @@ describe('utils', () => {
       },
       {
         got: {flag1: false, flag2: 'value2'},
-        want: ['--flag1', 'false', '--flag2', 'value2'],
+        want: ['--flag2', 'value2'],
       },
       {
         got: {},

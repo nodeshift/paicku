@@ -1,6 +1,6 @@
 import {Args, Command, Flags} from '@oclif/core'
 
-import {globalFlags} from '../../global/flags.js'
+import {globalFlags} from '../../flargs/global.js'
 import {parseFlags, runPack} from '../../utils/index.js'
 
 export default class SbomDownload extends Command {
