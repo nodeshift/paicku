@@ -1,1 +1,1 @@
-export {type InspectOptions, inspect} from './inspect.js'
+export {type InspectOptions, type InspectResult, inspect} from './inspect.js'

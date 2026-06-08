@@ -11,8 +11,29 @@ const __dirname = path.dirname(__filename)
 
 export type InspectOptions = Partial<Interfaces.InferredFlags<typeof inspectFlags>>
 
+export interface InspectResult<T = unknown> {
+  command: string
+  data: T | null
+  exitCode: number
+  parseError?: Error
+  stderr: string
+  stdout: string
+  success: boolean
+}
+
 type InspectRunnerOptions = {
   captureStdout?: boolean
+}
+
+function parseJsonOutput<T>(stdout: string): Pick<InspectResult<T>, 'data' | 'parseError'> {
+  try {
+    return {data: JSON.parse(stdout) as T}
+  } catch (error) {
+    return {
+      data: null,
+      parseError: error instanceof Error ? error : new Error(String(error)),
+    }
+  }
 }
 
 export async function runInspect(
@@ -20,7 +41,7 @@ export async function runInspect(
   options: InspectOptions = {},
   cacheDir?: string,
   {captureStdout = false}: InspectRunnerOptions = {},
-): Promise<string> {
+): Promise<InspectResult | string> {
   const argvs = [imageName]
 
   const flargs = parseFlags(options)
@@ -33,23 +54,42 @@ export async function runInspect(
   await Parser.parse(argvs, {args: inspectArgs, flags: inspectFlags})
 
   const packArgs = ['inspect', ...argvs]
+  const command = [packBinFilepath, ...packArgs].join(' ')
 
-  const {exitCode, stderr, stdout} = await execa(packBinFilepath, packArgs, {
+  if (captureStdout) {
+    const {exitCode, stderr, stdout} = await execa(packBinFilepath, packArgs, {
+      reject: false,
+      stdio: ['inherit', 'pipe', 'pipe'],
+    })
+
+    const stdoutStr = stdout ?? ''
+    const stderrStr = stderr ?? ''
+    const {data, parseError} =
+      options.output === 'json' ? parseJsonOutput(stdoutStr) : {data: null}
+
+    return {
+      command,
+      data,
+      exitCode: exitCode ?? 1,
+      parseError,
+      stderr: stderrStr,
+      stdout: stdoutStr,
+      success: exitCode === 0,
+    }
+  }
+
+  await execa(packBinFilepath, packArgs, {
     reject: false,
-    stdio: captureStdout ? ['inherit', 'pipe', 'pipe'] : 'inherit',
+    stdio: 'inherit',
   })
 
-  if (!captureStdout) {
-    return ''
-  }
-
-  if (exitCode === 0) {
-    return stdout ?? ''
-  }
-
-  return stderr ?? ''
+  return ''
 }
 
-export async function inspect(imageName: string, options: InspectOptions = {}, cacheDir?: string): Promise<string> {
-  return runInspect(imageName, options, cacheDir, {captureStdout: true})
+export async function inspect<T = unknown>(
+  imageName: string,
+  options: InspectOptions = {},
+  cacheDir?: string,
+): Promise<InspectResult<T>> {
+  return runInspect(imageName, options, cacheDir, {captureStdout: true}) as Promise<InspectResult<T>>
 }
