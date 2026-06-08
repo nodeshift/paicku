@@ -12,6 +12,7 @@
     "@oclif/core": "^4",
     "@oclif/plugin-help": "^6",
     "adm-zip": "^0.5.16",
+    "execa": "^9.6.1",
     "lookpath": "^1.2.3",
     "tar": "^7.4.3"
   },
@@ -91,5 +92,12 @@
     "integration:test:coverage": "c8 npm run integration:test",
     "version": "oclif readme && git add README.md"
   },
-  "types": "dist/index.d.ts"
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  }
 }
