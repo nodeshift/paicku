@@ -10,10 +10,10 @@ export const inspectFlags = {
   ...globalFlags,
   bom: Flags.boolean({description: 'print bill of materials'}),
   help: Flags.boolean({char: 'h', description: "Help for 'inspect'"}),
-  output: Flags.string({
+  output: Flags.option({
     char: 'o',
     default: 'human-readable',
     description: 'Output format to display builder detail.',
-    options: ['json', 'yaml', 'toml', 'human-readable'],
-  }),
+    options: ['json', 'yaml', 'toml', 'human-readable'] as const,
+  })(),
 }
