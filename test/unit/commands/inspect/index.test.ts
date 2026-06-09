@@ -32,4 +32,9 @@ describe('inspect', () => {
     const {stdout} = await runCommand('inspect my-image')
     expect(stdout).to.contain('inspect my-image --output human-readable')
   })
+
+  it('runs inspect --help', async () => {
+    const {stdout} = await runCommand('inspect my-image --help')
+    expect(stdout).to.contain('Show information about a built app image')
+  })
 })

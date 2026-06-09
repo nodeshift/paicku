@@ -1,13 +1,8 @@
-import {Config, Interfaces, Parser} from '@oclif/core'
+import {Interfaces, Parser} from '@oclif/core'
 import {execa} from 'execa'
-import path from 'node:path'
-import {fileURLToPath} from 'node:url'
 
 import {inspectArgs, inspectFlags} from '../flargs/inspect.js'
 import {parseFlags} from '../utils/index.js'
-
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = path.dirname(__filename)
 
 export type InspectOptions = Partial<Interfaces.InferredFlags<typeof inspectFlags>>
 
@@ -23,9 +18,11 @@ export interface InspectResult<T = unknown> {
 
 type InspectRunnerOptions = {
   captureStdout?: boolean
+  cwd?: string
+  env?: Record<string, string>
 }
 
-function parseJsonOutput<T>(stdout: string): Pick<InspectResult<T>, 'data' | 'parseError'> {
+function parseCommandJsonOutput<T>(stdout: string): Pick<InspectResult<T>, 'data' | 'parseError'> {
   try {
     return {data: JSON.parse(stdout) as T}
   } catch (error) {
@@ -38,9 +35,9 @@ function parseJsonOutput<T>(stdout: string): Pick<InspectResult<T>, 'data' | 'pa
 
 export async function runInspect(
   imageName: string,
-  options: InspectOptions = {},
-  cacheDir?: string,
-  {captureStdout = false}: InspectRunnerOptions = {},
+  options: InspectOptions,
+  executablePath: string,
+  {captureStdout = false, cwd, env}: InspectRunnerOptions = {},
 ): Promise<InspectResult | string> {
   const argvs = [imageName]
 
@@ -48,16 +45,18 @@ export async function runInspect(
 
   argvs.push(...flargs)
 
-  const resolvedCacheDir = cacheDir ?? (await Config.load(path.join(__dirname, '..'))).cacheDir
-  const packBinFilepath = path.join(resolvedCacheDir, 'pack')
-
   await Parser.parse(argvs, {args: inspectArgs, flags: inspectFlags})
 
   const packArgs = ['inspect', ...argvs]
-  const command = [packBinFilepath, ...packArgs].join(' ')
+  const command = [executablePath, ...packArgs].join(' ')
+  const execOptions = {
+    cwd,
+    ...(env ? {env: {...process.env, ...env}} : {}),
+  }
 
   if (captureStdout) {
-    const {exitCode, stderr, stdout} = await execa(packBinFilepath, packArgs, {
+    const {exitCode, stderr, stdout} = await execa(executablePath, packArgs, {
+      ...execOptions,
       reject: false,
       stdio: ['inherit', 'pipe', 'pipe'],
     })
@@ -65,7 +64,7 @@ export async function runInspect(
     const stdoutStr = stdout ?? ''
     const stderrStr = stderr ?? ''
     const {data, parseError} =
-      options.output === 'json' ? parseJsonOutput(stdoutStr) : {data: null}
+      options.output === 'json' ? parseCommandJsonOutput(stdoutStr) : {data: null}
 
     return {
       command,
@@ -78,18 +77,11 @@ export async function runInspect(
     }
   }
 
-  await execa(packBinFilepath, packArgs, {
-    reject: false,
+  await execa(executablePath, packArgs, {
+    ...execOptions,
     stdio: 'inherit',
   })
 
   return ''
 }
 
-export async function inspect<T = unknown>(
-  imageName: string,
-  options: InspectOptions = {},
-  cacheDir?: string,
-): Promise<InspectResult<T>> {
-  return runInspect(imageName, options, cacheDir, {captureStdout: true}) as Promise<InspectResult<T>>
-}

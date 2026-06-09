@@ -1,4 +1,5 @@
 import {Command} from '@oclif/core'
+import path from 'node:path'
 
 import {inspectArgs, inspectFlags} from '../../flargs/inspect.js'
 import {runInspect} from '../../runners/inspect.js'
@@ -22,6 +23,6 @@ export default class Inspect extends Command {
 
     this.debug(`inspect ${args.imageName} ${flagsArray.join(' ')}`)
 
-    await runInspect(args.imageName, flags, this.config.cacheDir)
+    await runInspect(args.imageName, flags, path.join(this.config.cacheDir, 'pack'))
   }
 }
