@@ -3,6 +3,7 @@ import path from 'node:path'
 import {fileURLToPath} from 'node:url'
 
 import {downloadPack} from '../hooks/prerun/download-pack.js'
+import {type BuilderSuggestOptions, type BuilderSuggestResult, runBuilderSuggest} from '../runners/builder-suggest.js'
 import {type InspectOptions, type InspectResult, runInspect} from '../runners/inspect.js'
 
 const __filename = fileURLToPath(import.meta.url)
@@ -16,6 +17,7 @@ export type PaickuOptions = {
 
 export type PaickuClient = {
   inspect<T = unknown>(imageName: string, options?: InspectOptions): Promise<InspectResult<T>>
+  builderSuggest(options?: BuilderSuggestOptions): Promise<BuilderSuggestResult>
 }
 
 export function createPaicku(options: PaickuOptions = {}): PaickuClient {
@@ -35,8 +37,15 @@ export function createPaicku(options: PaickuOptions = {}): PaickuClient {
 
   return {
     async inspect<T = unknown>(imageName: string, inspectOptions: InspectOptions = {}): Promise<InspectResult<T>> {
+    async builderSuggest(builderSuggestOptions: BuilderSuggestOptions = {}): Promise<BuilderSuggestResult> {
       const {resolvedExecutablePath} = await resolveExecutablePath()
 
+      return runBuilderSuggest(builderSuggestOptions, resolvedExecutablePath, {
+        captureStdout: true,
+        cwd: options.cwd,
+        env: options.env,
+      })
+    },
       return runInspect(imageName, inspectOptions, resolvedExecutablePath, {
         captureStdout: true,
         cwd: options.cwd,
