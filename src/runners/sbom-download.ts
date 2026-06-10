@@ -1,12 +1,12 @@
 import {Interfaces, Parser} from '@oclif/core'
 import {execa} from 'execa'
 
-import {inspectArgs, inspectFlags} from '../flargs/inspect.js'
+import {sbomArgs, sbomFlags} from '../flargs/sbom-download.js'
 import {parseFlags} from '../utils/index.js'
 
-export type InspectOptions = Partial<Interfaces.InferredFlags<typeof inspectFlags>>
+export type SbomDownloadOptions = Partial<Interfaces.InferredFlags<typeof sbomFlags>>
 
-export interface InspectResult<T = unknown> {
+export interface SbomDownloadResult<T = unknown> {
   code: string
   command: string
   exitCode: number
@@ -17,7 +17,7 @@ export interface InspectResult<T = unknown> {
   stdout: string
 }
 
-type InspectRunnerOptions = {
+type SbomDownloadRunnerOptions = {
   captureStdout?: boolean
   cwd?: string
   env?: Record<string, string>
@@ -34,23 +34,22 @@ function parseCommandJsonOutput<T>(stdout: string): {data: T | null; parseError:
   }
 }
 
-export async function runInspect(
+export async function runSbomDownload(
   imageName: string,
-  options: InspectOptions,
   executablePath: string,
-  {captureStdout = false, cwd, env}: InspectRunnerOptions = {},
-): Promise<InspectResult | string> {
+  options: SbomDownloadOptions = {},
+  {captureStdout = false, cwd, env}: SbomDownloadRunnerOptions = {},
+): Promise<SbomDownloadResult | string> {
   const argvs = [imageName]
 
   const flargs = parseFlags(options)
 
   argvs.push(...flargs)
 
-  await Parser.parse(argvs, {args: inspectArgs, flags: inspectFlags})
+  await Parser.parse(argvs, {args: sbomArgs, flags: sbomFlags})
 
-  const packArgs = ['inspect', ...argvs]
+  const packArgs = ['sbom', 'download', ...argvs]
 
-  // CWD can be undefined, as execa treats it as the current working directory
   const execOptions = {
     cwd,
     ...(env ? {env: {...process.env, ...env}} : {}),
@@ -63,7 +62,10 @@ export async function runInspect(
       stdio: ['inherit', 'pipe', 'pipe'],
     })
 
-    const {data, parseError} = options.output === 'json' ? parseCommandJsonOutput(result.stdout ?? '') : {data: null}
+    const {data, parseError} =
+      options['output-dir'] === 'json'
+        ? parseCommandJsonOutput(result.stdout ?? '')
+        : {data: null, parseError: undefined}
 
     return {
       code: result.code ?? '',

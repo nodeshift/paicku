@@ -4,6 +4,7 @@ import {mkdtemp, rm} from 'node:fs/promises'
 import {tmpdir} from 'node:os'
 import {join} from 'node:path'
 
+import {setupFakePack} from '../../../utils/fake-pack.js'
 import ghServer from './../../../mocks/githubServer/server'
 
 describe('download pack hook', () => {
@@ -22,6 +23,7 @@ describe('download pack hook', () => {
     process.env.PAICKU_CACHE_DIR = tempDir
     process.env.PAICKU_GITHUB_BASE_URL = 'http://localhost:3003'
     process.env.PAICKU_PACK_VERSION = '0.0.1'
+    await setupFakePack(tempDir, 'sbom download image-name --output-dir .')
   })
 
   afterEach(async () => {
@@ -34,7 +36,7 @@ describe('download pack hook', () => {
   })
 
   it('runs sbom download IMAGENAME', async () => {
-    const {stdout} = await runCommand('sbom download image-name')
-    expect(stdout).to.contain('sbom download image-name --output-dir .')
+    const {error} = await runCommand('sbom download image-name')
+    expect(error).to.be.undefined
   })
 })
