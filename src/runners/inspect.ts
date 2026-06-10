@@ -6,13 +6,13 @@ import {parseFlags} from '../utils/index.js'
 
 export type InspectOptions = Partial<Interfaces.InferredFlags<typeof inspectFlags>>
 
-export interface InspectResult<T = unknown> {
+export interface InspectResult {
   code: string
   command: string
   exitCode: number
   failed: boolean
   parseError?: Error
-  parsedStdout: T | null
+  parsedStdout: unknown
   stderr: string
   stdout: string
 }
@@ -39,7 +39,7 @@ export async function runInspect(
   options: InspectOptions,
   executablePath: string,
   {captureStdout = false, cwd, env}: InspectRunnerOptions = {},
-): Promise<InspectResult | string> {
+): Promise<InspectResult> {
   const argvs = [imageName]
 
   const flargs = parseFlags(options)
@@ -82,5 +82,13 @@ export async function runInspect(
     stdio: 'inherit',
   })
 
-  return ''
+  return {
+    code: '',
+    command: '',
+    exitCode: 0,
+    failed: false,
+    parsedStdout: null,
+    stderr: '',
+    stdout: '',
+  }
 }

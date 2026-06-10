@@ -16,8 +16,8 @@ export type PaickuOptions = {
 }
 
 export type PaickuClient = {
-  inspect<T = unknown>(imageName: string, options?: InspectOptions): Promise<InspectResult<T>>
   builderSuggest(options?: BuilderSuggestOptions): Promise<BuilderSuggestResult>
+  inspect(imageName: string, options?: InspectOptions): Promise<InspectResult>
 }
 
 export function createPaicku(options: PaickuOptions = {}): PaickuClient {
@@ -36,7 +36,6 @@ export function createPaicku(options: PaickuOptions = {}): PaickuClient {
   }
 
   return {
-    async inspect<T = unknown>(imageName: string, inspectOptions: InspectOptions = {}): Promise<InspectResult<T>> {
     async builderSuggest(builderSuggestOptions: BuilderSuggestOptions = {}): Promise<BuilderSuggestResult> {
       const {resolvedExecutablePath} = await resolveExecutablePath()
 
@@ -46,11 +45,14 @@ export function createPaicku(options: PaickuOptions = {}): PaickuClient {
         env: options.env,
       })
     },
+    async inspect(imageName: string, inspectOptions: InspectOptions = {}): Promise<InspectResult> {
+      const {resolvedExecutablePath} = await resolveExecutablePath()
+
       return runInspect(imageName, inspectOptions, resolvedExecutablePath, {
         captureStdout: true,
         cwd: options.cwd,
         env: options.env,
-      }) as Promise<InspectResult<T>>
+      })
     },
   }
 }
