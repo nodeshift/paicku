@@ -3,7 +3,6 @@ import path from 'node:path'
 
 import {inspectArgs, inspectFlags} from '../../flargs/inspect.js'
 import {runInspect} from '../../runners/inspect.js'
-import {parseFlags} from '../../utils/index.js'
 
 export default class Inspect extends Command {
   static readonly aliases = ['inspect', 'inspect-image']
@@ -18,10 +17,6 @@ export default class Inspect extends Command {
 
   public async run(): Promise<void> {
     const {args, flags} = await this.parse(Inspect)
-
-    const flagsArray = parseFlags(flags)
-
-    this.debug(`inspect ${args.imageName} ${flagsArray.join(' ')}`)
 
     await runInspect(args.imageName, flags, path.join(this.config.cacheDir, 'pack'))
   }

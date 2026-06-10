@@ -2,6 +2,7 @@ import {Config} from '@oclif/core'
 import path from 'node:path'
 import {fileURLToPath} from 'node:url'
 
+import {downloadPack} from '../hooks/prerun/download-pack.js'
 import {type InspectOptions, type InspectResult, runInspect} from '../runners/inspect.js'
 
 const __filename = fileURLToPath(import.meta.url)
@@ -20,24 +21,23 @@ export type PaickuClient = {
 export function createPaicku(options: PaickuOptions = {}): PaickuClient {
   let resolvedExecutablePath: string | undefined
 
-  const resolveExecutablePath = async (): Promise<string> => {
+  const resolveExecutablePath = async (): Promise<{logs: string[]; resolvedExecutablePath: string}> => {
     if (options.executablePath) {
-      return options.executablePath
+      return {logs: [], resolvedExecutablePath: options.executablePath}
     }
 
-    if (!resolvedExecutablePath) {
-      const {cacheDir} = await Config.load(path.join(__dirname, '..'))
-      resolvedExecutablePath = path.join(cacheDir, 'pack')
-    }
+    const {cacheDir} = await Config.load(path.join(__dirname, '..'))
+    const {logs} = await downloadPack(cacheDir)
+    resolvedExecutablePath = path.join(cacheDir, 'pack')
 
-    return resolvedExecutablePath
+    return {logs, resolvedExecutablePath}
   }
 
   return {
     async inspect<T = unknown>(imageName: string, inspectOptions: InspectOptions = {}): Promise<InspectResult<T>> {
-      const executablePath = await resolveExecutablePath()
+      const {resolvedExecutablePath} = await resolveExecutablePath()
 
-      return runInspect(imageName, inspectOptions, executablePath, {
+      return runInspect(imageName, inspectOptions, resolvedExecutablePath, {
         captureStdout: true,
         cwd: options.cwd,
         env: options.env,

@@ -18,15 +18,37 @@ type toolsConfig = {
 const toolsConfigPath = fileURLToPath(new URL('../../../tools.json', import.meta.url))
 const DEFAULT_PACK_VERSION = getDefaultPackVersion()
 
+export type DownloadPackResult = {
+  logs: string[]
+}
+
+export type DownloadPackOptions = {
+  log?: (message: string) => void
+}
+
 const hook: Hook<'prerun'> = async function () {
   const {cacheDir} = this.config
+
+  try {
+    await downloadPack(cacheDir, {log: this.log.bind(this)})
+  } catch (error) {
+    this.error(`${error}`, {exit: 1})
+  }
+}
+
+export async function downloadPack(
+  cacheDir: string,
+  options: DownloadPackOptions = {},
+): Promise<DownloadPackResult> {
+  const logs: string[] = []
+  const log = options.log ?? ((message: string) => logs.push(message))
 
   if (!fs.existsSync(cacheDir)) {
     fs.mkdirSync(cacheDir, {recursive: true})
   }
 
   if (await isExecutable(path.join(cacheDir, 'pack'))) {
-    return
+    return {logs}
   }
 
   const arch = os.arch()
@@ -39,38 +61,36 @@ const hook: Hook<'prerun'> = async function () {
 
   const packUrl = getPackUrl(platform, arch, packVersion)
 
-  try {
-    this.log(`Downloading pack binary with version ${packVersion} for ${arch} to ${cacheDir}`)
-    await downloadFile(packUrl, cacheDir, `pack.${compression}`)
+  log(`Downloading pack binary with version ${packVersion} for ${arch} to ${cacheDir}`)
+  await downloadFile(packUrl, cacheDir, `pack.${compression}`)
 
-    this.log(`Downloading pack sha256 checksum`)
-    await downloadFile(packUrl + '.sha256', cacheDir, `pack.${compression}.sha256`)
+  log(`Downloading pack sha256 checksum`)
+  await downloadFile(packUrl + '.sha256', cacheDir, `pack.${compression}.sha256`)
 
-    const checksum = await checksumFile('sha256', path.join(cacheDir, `pack.${compression}`))
+  const checksum = await checksumFile('sha256', path.join(cacheDir, `pack.${compression}`))
 
-    const expectedChecksum = fs.readFileSync(path.join(cacheDir, `pack.${compression}.sha256`), 'utf8').split(' ')[0]
+  const expectedChecksum = fs.readFileSync(path.join(cacheDir, `pack.${compression}.sha256`), 'utf8').split(' ')[0]
 
-    if (checksum !== expectedChecksum) {
-      this.error(`Checksum mismatch expected ${expectedChecksum}, got ${checksum}`, {exit: 1})
+  if (checksum !== expectedChecksum) {
+    throw new Error(`Checksum mismatch expected ${expectedChecksum}, got ${checksum}`)
+  }
+
+  await extractArchive(path.join(cacheDir, `pack.${compression}`), cacheDir, compression, log)
+
+  if (platform === 'win32') {
+    try {
+      fs.renameSync(path.join(cacheDir, `pack.exe`), path.join(cacheDir, `pack`))
+    } catch (error) {
+      throw new Error(`Failed to rename pack binary \n Error: ${error}`)
     }
-
-    await extractArchive(path.join(cacheDir, `pack.${compression}`), cacheDir, compression, this.log.bind(this))
-
-    if (platform === 'win32') {
-      try {
-        fs.renameSync(path.join(cacheDir, `pack.exe`), path.join(cacheDir, `pack`))
-      } catch (error) {
-        this.error(`Failed to rename pack binary \n Error: ${error}`, {exit: 1})
-      }
-    } else {
-      await changePermissions(path.join(cacheDir, 'pack'), this.log.bind(this))
-    }
-  } catch (error) {
-    this.error(`${error}`, {exit: 1})
+  } else {
+    await changePermissions(path.join(cacheDir, 'pack'), log)
   }
 
   fs.unlinkSync(path.join(cacheDir, `pack.${compression}`))
   fs.unlinkSync(path.join(cacheDir, `pack.${compression}.sha256`))
+
+  return {logs}
 }
 
 function getDefaultPackVersion(): string {
