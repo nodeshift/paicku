@@ -1,16 +1,10 @@
 import {expect} from 'chai'
-import {chmod, mkdtemp, rm, writeFile} from 'node:fs/promises'
+import {mkdtemp, rm} from 'node:fs/promises'
 import {tmpdir} from 'node:os'
 import {join} from 'node:path'
 
 import {createPaicku} from '../../../src/index.js'
-
-async function setupFakePack(dir: string, output: string): Promise<string> {
-  const packPath = join(dir, 'pack')
-  await writeFile(packPath, `#!/bin/sh\nprintf '%s\\n' '${output}'\n`)
-  await chmod(packPath, 0o755)
-  return packPath
-}
+import {setupFakePack} from '../../utils/fake-pack.js'
 
 describe('paicku package', () => {
   let cacheDir: string

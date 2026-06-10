@@ -1,16 +1,11 @@
 import {runCommand} from '@oclif/test'
 import {expect} from 'chai'
-import {chmod, mkdtemp, rm, writeFile} from 'node:fs/promises'
+import {mkdtemp, rm} from 'node:fs/promises'
 import {tmpdir} from 'node:os'
 import {join} from 'node:path'
 
+import {setupFakePack} from '../../../utils/fake-pack.js'
 import ghServer from './../../../mocks/githubServer/server'
-
-async function setupFakePack(dir: string): Promise<void> {
-  const packPath = join(dir, 'pack')
-  await writeFile(packPath, `#!/bin/sh\nprintf '%s\\n' 'inspect my-image --output human-readable'\n`)
-  await chmod(packPath, 0o755)
-}
 
 describe('inspect', () => {
   let tempDir: string
@@ -28,7 +23,7 @@ describe('inspect', () => {
     process.env.PAICKU_CACHE_DIR = tempDir
     process.env.PAICKU_GITHUB_BASE_URL = 'http://localhost:3003'
     process.env.PAICKU_PACK_VERSION = '0.0.1'
-    await setupFakePack(tempDir)
+    await setupFakePack(tempDir, 'inspect my-image --output human-readable')
   })
 
   afterEach(async () => {
