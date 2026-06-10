@@ -32,9 +32,9 @@ describe('paicku package', () => {
       output: 'json',
     })
 
-    expect(result.success).to.be.true
+    expect(result.failed).to.be.false
     expect(result.stdout.trim()).to.equal('{"remote":null,"local":null}')
-    expect(result.data).to.deep.equal({local: null, remote: null})
+    expect(result.parsedStdout).to.deep.equal({local: null, remote: null})
     expect(result.command).to.include('--bom')
   })
 
@@ -86,9 +86,9 @@ describe('paicku package', () => {
       output: 'json',
     })
 
-    expect(result.success).to.be.true
+    expect(result.failed).to.be.false
     expect(result.stdout.trim()).to.equal(JSON.stringify(inspectData))
-    expect(result.data).to.deep.equal(inspectData)
+    expect(result.parsedStdout).to.deep.equal(inspectData)
     expect(result.command).to.include('inspect yarn-simple-app:latest')
   })
 })

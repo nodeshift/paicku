@@ -7,13 +7,14 @@ import {parseFlags} from '../utils/index.js'
 export type InspectOptions = Partial<Interfaces.InferredFlags<typeof inspectFlags>>
 
 export interface InspectResult<T = unknown> {
+  code: string
   command: string
-  data: T | null
   exitCode: number
+  failed: boolean
   parseError?: Error
+  parsedStdout: T | null
   stderr: string
   stdout: string
-  success: boolean
 }
 
 type InspectRunnerOptions = {
@@ -22,9 +23,9 @@ type InspectRunnerOptions = {
   env?: Record<string, string>
 }
 
-function parseCommandJsonOutput<T>(stdout: string): Pick<InspectResult<T>, 'data' | 'parseError'> {
+function parseCommandJsonOutput<T>(stdout: string): {data: T | null, parseError: Error | undefined} {
   try {
-    return {data: JSON.parse(stdout) as T}
+    return {data: JSON.parse(stdout), parseError: undefined}
   } catch (error) {
     return {
       data: null,
@@ -48,32 +49,31 @@ export async function runInspect(
   await Parser.parse(argvs, {args: inspectArgs, flags: inspectFlags})
 
   const packArgs = ['inspect', ...argvs]
-  const command = [executablePath, ...packArgs].join(' ')
+
+  // CWD can be undefined, as execa treats it as the current working directory
   const execOptions = {
     cwd,
     ...(env ? {env: {...process.env, ...env}} : {}),
   }
 
   if (captureStdout) {
-    const {exitCode, stderr, stdout} = await execa(executablePath, packArgs, {
+    const result = await execa(executablePath, packArgs, {
       ...execOptions,
       reject: false,
       stdio: ['inherit', 'pipe', 'pipe'],
     })
 
-    const stdoutStr = stdout ?? ''
-    const stderrStr = stderr ?? ''
-    const {data, parseError} =
-      options.output === 'json' ? parseCommandJsonOutput(stdoutStr) : {data: null}
+    const {data, parseError} = options.output === 'json' ? parseCommandJsonOutput(result.stdout ?? '') : {data: null}
 
     return {
-      command,
-      data,
-      exitCode: exitCode ?? 1,
+      code: result.code ?? "",
+      command: result.command,
+      exitCode: result.exitCode ?? 1,
+      failed: result.failed,
       parseError,
-      stderr: stderrStr,
-      stdout: stdoutStr,
-      success: exitCode === 0,
+      parsedStdout: data,
+      stderr: result.stderr || result.shortMessage || '',
+      stdout: result.stdout ?? '',
     }
   }
 
@@ -84,4 +84,3 @@ export async function runInspect(
 
   return ''
 }
-
