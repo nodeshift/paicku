@@ -30,7 +30,7 @@ export default class Build extends Command {
       description: 'Build an app with a random image-name and default builder',
     },
     {
-      command: `<%= config.bin %> <%= command.id %> image-name --builder docker.io/builder-ubi8-base`,
+      command: `<%= config.bin %> <%= command.id %> image-name --builder docker.io/paketobuildpacks/builder-ubi8-base`,
       description: 'Build and app with a specific image-name and builder',
     },
     {
@@ -38,7 +38,7 @@ export default class Build extends Command {
       description: 'Build an app from a remote git repository with specifying a sub-directory.',
     },
     {
-      command: `<%= config.bin %> <%= command.id %> image-name --builder docker.io/builder-ubi8-base --path /path/to/app`,
+      command: `<%= config.bin %> <%= command.id %> image-name --builder docker.io/paketobuildpacks/builder-ubi8-base --path /path/to/app`,
       description: 'Build an app with a specific image-name and builder with a specific local path',
     },
   ]
