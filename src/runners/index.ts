@@ -1,5 +1,5 @@
-export {type RunnerConsole} from '../types/index.js'
-export {type BuildOptions, runBuild} from './build.js'
+export {type RunnerConsole, type RunnerLogs, createRunnerConsole} from '../types/index.js'
+export {type BuildOptions, type BuildResult, runBuild} from './build.js'
 export {type BuilderSuggestOptions, type BuilderSuggestResult} from './builder-suggest.js'
 export {type InspectOptions, type InspectResult} from './inspect.js'
 export {type SbomDownloadOptions, type SbomDownloadResult} from './sbom-download.js'

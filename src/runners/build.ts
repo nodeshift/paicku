@@ -5,7 +5,7 @@ import path from 'node:path'
 
 import {CONTAINER_RUNTIMES_IN_PRIORITY, DEFAULT_BUILDER_IMAGE} from '../constants/index.js'
 import {buildFlags} from '../flargs/build.js'
-import {RunnerConsole} from '../types/index.js'
+import {RunnerConsole, RunnerLogs, createRunnerConsole} from '../types/index.js'
 import {
   cloneRepo,
   configureContainerRuntime,
@@ -18,7 +18,21 @@ import {
 
 export type BuildOptions = Partial<Interfaces.InferredFlags<typeof buildFlags>>
 
+export interface BuildResult {
+  code: string
+  command: string
+  exitCode: number
+  failed: boolean
+  imageName: string
+  logs: RunnerLogs
+  stderr: string
+  stdout: string
+}
+
 type BuildRunnerOptions = {
+  captureStdout?: boolean
+  console?: RunnerConsole
+  cwd?: string
   env?: Record<string, string>
 }
 
@@ -26,10 +40,11 @@ export async function runBuild(
   imageName: string | undefined,
   options: BuildOptions,
   executablePath: string,
-  console: RunnerConsole,
   runnerOptions: BuildRunnerOptions = {},
-): Promise<void> {
-  const {env: runnerEnv} = runnerOptions
+): Promise<BuildResult> {
+  const {captureStdout = false, console: cliConsole, cwd, env: runnerEnv} = runnerOptions
+  const logs: RunnerLogs = {error: [], log: [], warn: []}
+  const console = cliConsole ?? createRunnerConsole(logs)
   let envs = {}
 
   const arch = os.arch()
@@ -103,8 +118,43 @@ export async function runBuild(
 
   const packArgs = ['build', resolvedImageName, ...flagsArray, ...packConfiguration.flags]
 
-  await execa(executablePath, packArgs, {
+  const execOptions = {
+    cwd,
     env: {...processEnv, ...envs, ...runnerEnv},
+  }
+
+  if (captureStdout) {
+    const result = await execa(executablePath, packArgs, {
+      ...execOptions,
+      reject: false,
+      stdio: ['inherit', 'pipe', 'pipe'],
+    })
+
+    return {
+      code: result.code ?? '',
+      command: result.command,
+      exitCode: result.exitCode ?? 1,
+      failed: result.failed,
+      imageName: resolvedImageName,
+      logs,
+      stderr: result.stderr || result.shortMessage || '',
+      stdout: result.stdout ?? '',
+    }
+  }
+
+  await execa(executablePath, packArgs, {
+    ...execOptions,
     stdio: 'inherit',
   })
+
+  return {
+    code: '',
+    command: '',
+    exitCode: 0,
+    failed: false,
+    imageName: resolvedImageName,
+    logs,
+    stderr: '',
+    stdout: '',
+  }
 }

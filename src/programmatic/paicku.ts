@@ -3,6 +3,7 @@ import path from 'node:path'
 import {fileURLToPath} from 'node:url'
 
 import {downloadPack} from '../hooks/prerun/download-pack.js'
+import {type BuildOptions, type BuildResult, runBuild} from '../runners/build.js'
 import {type BuilderSuggestOptions, type BuilderSuggestResult, runBuilderSuggest} from '../runners/builder-suggest.js'
 import {type InspectOptions, type InspectResult, runInspect} from '../runners/inspect.js'
 import {type SbomDownloadOptions, type SbomDownloadResult, runSbomDownload} from '../runners/sbom-download.js'
@@ -16,7 +17,10 @@ export type PaickuOptions = {
   executablePath?: string
 }
 
+export type PaickuBuildOptions = BuildOptions
+
 export type PaickuClient = {
+  build(imageName?: string, options?: PaickuBuildOptions): Promise<BuildResult>
   builder(command: 'suggest', options?: BuilderSuggestOptions): Promise<BuilderSuggestResult>
   inspect(imageName: string, options?: InspectOptions): Promise<InspectResult>
   sbom(command: 'download', imageName: string, options?: SbomDownloadOptions): Promise<SbomDownloadResult>
@@ -38,6 +42,15 @@ export function createPaicku(options: PaickuOptions = {}): PaickuClient {
   }
 
   return {
+    async build(imageName?: string, buildOptions: PaickuBuildOptions = {}): Promise<BuildResult> {
+      const {resolvedExecutablePath} = await resolveExecutablePath()
+
+      return runBuild(imageName, buildOptions, resolvedExecutablePath, {
+        captureStdout: true,
+        cwd: options.cwd,
+        env: options.env,
+      })
+    },
     async builder(command: 'suggest', builderOptions: BuilderSuggestOptions = {}): Promise<BuilderSuggestResult> {
       const {resolvedExecutablePath} = await resolveExecutablePath()
 

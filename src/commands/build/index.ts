@@ -36,9 +36,11 @@ export default class Build extends Command {
     const {args, flags} = await this.parse(Build)
 
     await runBuild(args.imageName, flags, path.join(this.config.cacheDir, 'pack'), {
-      error: this.error.bind(this),
-      log: this.log.bind(this),
-      warn: this.warn.bind(this),
+      console: {
+        error: this.error.bind(this),
+        log: this.log.bind(this),
+        warn: this.warn.bind(this),
+      },
     })
   }
 }
