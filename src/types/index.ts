@@ -15,6 +15,7 @@ export type RunnerLogs = {
 export type RunnerConsole = {
   error: (message: string, options?: {exit?: number}) => never
   log: (message: string) => void
+  logToStderr: (message: string) => void
   warn: (message: string) => void
 }
 
@@ -26,6 +27,9 @@ export function createRunnerConsole(logs?: RunnerLogs): RunnerConsole {
     },
     log(message: string) {
       logs?.log.push(message)
+    },
+    logToStderr(message: string) {
+      logs?.warn.push(message)
     },
     warn(message: string) {
       logs?.warn.push(message)

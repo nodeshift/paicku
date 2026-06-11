@@ -18,15 +18,16 @@ import {
 
 export type BuildOptions = Partial<Interfaces.InferredFlags<typeof buildFlags>>
 
+import process from 'node:process'
+
 export interface BuildResult {
   code: string
   command: string
   exitCode: number
   failed: boolean
   imageName: string
-  logs: RunnerLogs
-  stderr: string
-  stdout: string
+  stderr: string[]
+  stdout: string[]
 }
 
 type BuildRunnerOptions = {
@@ -120,41 +121,43 @@ export async function runBuild(
 
   const execOptions = {
     cwd,
-    env: {...processEnv, ...envs, ...runnerEnv},
+    env: {...processEnv, ...envs, FORCE_COLOR: '1', ...runnerEnv},
   }
 
-  if (captureStdout) {
-    const result = await execa(executablePath, packArgs, {
-      ...execOptions,
-      reject: false,
-      stdio: ['inherit', 'pipe', 'pipe'],
+  const execaOptions = captureStdout
+    ? {
+        ...execOptions,
+        reject: false,
+        stdio: ['inherit', 'pipe', 'pipe'] as const,
+      }
+    : {
+        ...execOptions,
+        stdio: 'inherit' as const,
+      }
+
+  const subprocess = execa(executablePath, packArgs, execaOptions)
+
+  if (subprocess.stdout) {
+    subprocess.stdout.on('data', (chunk) => {
+      console.log(chunk.toString().trimEnd())
     })
-
-    return {
-      code: result.code ?? '',
-      command: result.command,
-      exitCode: result.exitCode ?? 1,
-      failed: result.failed,
-      imageName: resolvedImageName,
-      logs,
-      stderr: result.stderr || result.shortMessage || '',
-      stdout: result.stdout ?? '',
-    }
   }
 
-  await execa(executablePath, packArgs, {
-    ...execOptions,
-    stdio: 'inherit',
-  })
+  if (subprocess.stderr) {
+    subprocess.stderr.on('data', (chunk) => {
+      console.logToStderr(chunk.toString().trimEnd())
+    })
+  }
+
+  const result = await subprocess
 
   return {
-    code: '',
-    command: '',
-    exitCode: 0,
-    failed: false,
+    code: result.code ?? '',
+    command: result.command,
+    exitCode: result.exitCode ?? 1,
+    failed: result.failed,
     imageName: resolvedImageName,
-    logs,
-    stderr: '',
-    stdout: '',
+    stderr: [...logs.warn, ...logs.error],
+    stdout: logs.log,
   }
 }

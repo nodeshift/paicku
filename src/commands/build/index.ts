@@ -39,6 +39,7 @@ export default class Build extends Command {
       console: {
         error: this.error.bind(this),
         log: this.log.bind(this),
+        logToStderr: this.logToStderr.bind(this),
         warn: this.warn.bind(this),
       },
     })
