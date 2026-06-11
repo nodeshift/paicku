@@ -75,7 +75,7 @@ export function createPaicku(options: PaickuOptions = {}): PaickuClient {
         captureStdout: true,
         cwd: options.cwd,
         env: options.env,
-      }) as Promise<SbomDownloadResult>
+      })
     },
   }
 }

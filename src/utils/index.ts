@@ -6,7 +6,7 @@ import path, {join} from 'node:path'
 import url from 'node:url'
 
 import {CLONED_REPOS_TMP_DIRNAME} from '../constants/index.js'
-import {Envs, Flags} from '../types/index.js'
+import {Envs, Flags, RunnerConsole} from '../types/index.js'
 
 export function getPackUrl(platform: string, arch: string, packVersion: string) {
   const packNamingConvention = getPackNamingConvention(arch, platform)
@@ -72,51 +72,6 @@ export function getPackNamingConvention(arch: string, platform: string): string 
   }
 
   throw new Error(`Unsupported platform/architecture: ${platform}/${arch}`)
-}
-
-export async function runPack({
-  cacheDir,
-  console,
-  envs,
-  flargs,
-}: {
-  cacheDir: string
-  console: {
-    error: (message: string, options?: {exit: number}) => void
-    log: (message: string) => void
-  }
-  envs: Envs
-  flargs: string[]
-}): Promise<void> {
-  const packBinFilepath = path.join(cacheDir, 'pack')
-
-  const isVerbose = flargs.includes('--verbose') || flargs.includes('-v')
-  if (isVerbose) {
-    console.log(
-      `Running pack with args: ${Object.entries(envs)
-        .map(([key, value]) => `${key}=${value}`)
-        .join(' ')} ${packBinFilepath} ${flargs.join(' ')}`,
-    )
-  }
-
-  const bin = spawn(packBinFilepath, flargs, {env: {...process.env, ...envs}})
-
-  for await (const chunk of bin.stdout) {
-    console.log(chunk.toString())
-  }
-
-  let errorChunks = ''
-  for await (const errorChunk of bin.stderr) {
-    errorChunks += errorChunk
-  }
-
-  const exitCode = await new Promise<number>((resolve) => {
-    bin.on('close', resolve)
-  })
-
-  if (exitCode) {
-    console.error(errorChunks.toString(), {exit: Number(exitCode)})
-  }
 }
 
 // Returns true when the builder image is explicitly prefixed with a registry host.
@@ -310,10 +265,7 @@ export function sortArrayBasedOnOrder(array: string[], order: string[]): string[
 export async function configureContainerRuntime(
   containerRuntime: string,
   target: {arch: string; platform: string},
-  console: {
-    error: (message: string, options?: {exit: number}) => void
-    log: (message: string) => void
-  },
+  console: RunnerConsole,
 ): Promise<{envs: Envs; flags: string[]}> {
   if (containerRuntime === 'podman' && target.platform === 'darwin' && target.arch === 'arm64') {
     return configurePodmanOnDarwinArm64(console)
@@ -377,10 +329,7 @@ function configureDockerOnDarwinArm64(): {envs: Envs; flags: string[]} {
 }
 
 // eslint-disable-next-line complexity
-async function configurePodmanOnDarwinArm64(console: {
-  error: (message: string, options?: {exit: number}) => void
-  log: (message: string) => void
-}): Promise<{envs: Envs; flags: string[]}> {
+async function configurePodmanOnDarwinArm64(console: RunnerConsole): Promise<{envs: Envs; flags: string[]}> {
   let listPodmanConnections
   try {
     const podmandSystemConnectionLsCommand = execFileSync(
