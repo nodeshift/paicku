@@ -6,13 +6,11 @@ import {parseFlags} from '../utils/index.js'
 
 export type SbomDownloadOptions = Partial<Interfaces.InferredFlags<typeof sbomFlags>>
 
-export interface SbomDownloadResult<T = unknown> {
+export interface SbomDownloadResult {
   code: string
   command: string
   exitCode: number
   failed: boolean
-  parseError?: Error
-  parsedStdout: T | null
   stderr: string
   stdout: string
 }
@@ -23,23 +21,14 @@ type SbomDownloadRunnerOptions = {
   env?: Record<string, string>
 }
 
-function parseCommandJsonOutput<T>(stdout: string): {data: T | null; parseError: Error | undefined} {
-  try {
-    return {data: JSON.parse(stdout), parseError: undefined}
-  } catch (error) {
-    return {
-      data: null,
-      parseError: error instanceof Error ? error : new Error(String(error)),
-    }
-  }
-}
 
 export async function runSbomDownload(
   imageName: string,
   executablePath: string,
   options: SbomDownloadOptions = {},
-  {captureStdout = false, cwd, env}: SbomDownloadRunnerOptions = {},
-): Promise<SbomDownloadResult | string> {
+  runnerOptions: SbomDownloadRunnerOptions = {},
+): Promise<SbomDownloadResult> {
+  const {captureStdout = false, cwd, env} = runnerOptions
   const argvs = [imageName]
 
   const flargs = parseFlags(options)
@@ -62,18 +51,12 @@ export async function runSbomDownload(
       stdio: ['inherit', 'pipe', 'pipe'],
     })
 
-    const {data, parseError} =
-      options['output-dir'] === 'json'
-        ? parseCommandJsonOutput(result.stdout ?? '')
-        : {data: null, parseError: undefined}
 
     return {
       code: result.code ?? '',
       command: result.command,
       exitCode: result.exitCode ?? 1,
       failed: result.failed,
-      parseError,
-      parsedStdout: data,
       stderr: result.stderr || result.shortMessage || '',
       stdout: result.stdout ?? '',
     }
@@ -84,5 +67,12 @@ export async function runSbomDownload(
     stdio: 'inherit',
   })
 
-  return ''
+  return {
+    code: "",
+    command: "",
+    exitCode: 0,
+    failed: false,
+    stderr: '',
+    stdout: '',
+  }
 }

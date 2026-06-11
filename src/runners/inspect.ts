@@ -23,7 +23,7 @@ type InspectRunnerOptions = {
   env?: Record<string, string>
 }
 
-function parseCommandJsonOutput<T>(stdout: string): {data: T | null; parseError: Error | undefined} {
+function parseCommandJsonOutput(stdout: string): {data: unknown; parseError: Error | undefined} {
   try {
     return {data: JSON.parse(stdout), parseError: undefined}
   } catch (error) {
@@ -38,8 +38,9 @@ export async function runInspect(
   imageName: string,
   options: InspectOptions,
   executablePath: string,
-  {captureStdout = false, cwd, env}: InspectRunnerOptions = {},
+  runnerOptions: InspectRunnerOptions = {},
 ): Promise<InspectResult> {
+  const {captureStdout = false, cwd, env} = runnerOptions
   const argvs = [imageName]
 
   const flargs = parseFlags(options)
