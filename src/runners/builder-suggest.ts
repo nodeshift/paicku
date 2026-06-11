@@ -24,8 +24,9 @@ type BuilderSuggestRunnerOptions = {
 export async function runBuilderSuggest(
   options: BuilderSuggestOptions,
   executablePath: string,
-  {captureStdout = false, cwd, env}: BuilderSuggestRunnerOptions = {},
+  runnerOptions: BuilderSuggestRunnerOptions = {},
 ): Promise<BuilderSuggestResult> {
+  const {captureStdout = false, cwd, env} = runnerOptions
   const argvs: string[] = []
 
   const flargs = parseFlags(options)

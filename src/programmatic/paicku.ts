@@ -5,6 +5,7 @@ import {fileURLToPath} from 'node:url'
 import {downloadPack} from '../hooks/prerun/download-pack.js'
 import {type BuilderSuggestOptions, type BuilderSuggestResult, runBuilderSuggest} from '../runners/builder-suggest.js'
 import {type InspectOptions, type InspectResult, runInspect} from '../runners/inspect.js'
+import {type SbomDownloadOptions, type SbomDownloadResult, runSbomDownload} from '../runners/sbom-download.js'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -16,8 +17,9 @@ export type PaickuOptions = {
 }
 
 export type PaickuClient = {
-  builderSuggest(options?: BuilderSuggestOptions): Promise<BuilderSuggestResult>
+  builder(command: 'suggest', options?: BuilderSuggestOptions): Promise<BuilderSuggestResult>
   inspect(imageName: string, options?: InspectOptions): Promise<InspectResult>
+  sbom(command: 'download', imageName: string, options?: SbomDownloadOptions): Promise<SbomDownloadResult>
 }
 
 export function createPaicku(options: PaickuOptions = {}): PaickuClient {
@@ -36,10 +38,14 @@ export function createPaicku(options: PaickuOptions = {}): PaickuClient {
   }
 
   return {
-    async builderSuggest(builderSuggestOptions: BuilderSuggestOptions = {}): Promise<BuilderSuggestResult> {
+    async builder(command: 'suggest', builderOptions: BuilderSuggestOptions = {}): Promise<BuilderSuggestResult> {
       const {resolvedExecutablePath} = await resolveExecutablePath()
 
-      return runBuilderSuggest(builderSuggestOptions, resolvedExecutablePath, {
+      if (command !== 'suggest') {
+        throw new Error(`Unsupported builder command: ${command}`)
+      }
+
+      return runBuilderSuggest(builderOptions, resolvedExecutablePath, {
         captureStdout: true,
         cwd: options.cwd,
         env: options.env,
@@ -53,6 +59,23 @@ export function createPaicku(options: PaickuOptions = {}): PaickuClient {
         cwd: options.cwd,
         env: options.env,
       })
+    },
+    async sbom(
+      command: 'download',
+      imageName: string,
+      sbomOptions: SbomDownloadOptions = {},
+    ): Promise<SbomDownloadResult> {
+      const {resolvedExecutablePath} = await resolveExecutablePath()
+
+      if (command !== 'download') {
+        throw new Error(`Unsupported sbom command: ${command}`)
+      }
+
+      return runSbomDownload(imageName, resolvedExecutablePath, sbomOptions, {
+        captureStdout: true,
+        cwd: options.cwd,
+        env: options.env,
+      }) as Promise<SbomDownloadResult>
     },
   }
 }
