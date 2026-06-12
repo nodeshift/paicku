@@ -5,7 +5,7 @@ import path from 'node:path'
 
 import {CONTAINER_RUNTIMES_IN_PRIORITY, DEFAULT_BUILDER_IMAGE} from '../constants/index.js'
 import {buildFlags} from '../flargs/build.js'
-import {RunnerConsole, RunnerLogs, createRunnerConsole} from '../types/index.js'
+import {EnvsForRun, RunnerConsole, RunnerLogs, createRunnerConsole} from '../types/index.js'
 import {
   cloneRepo,
   configureContainerRuntime,
@@ -23,6 +23,8 @@ import process from 'node:process'
 export interface BuildResult {
   code: string
   command: string
+  containerRuntime: string
+  envsForRun: EnvsForRun
   exitCode: number
   failed: boolean
   imageName: string
@@ -46,7 +48,6 @@ export async function runBuild(
   const {captureStdout = false, console: cliConsole, cwd, env: runnerEnv} = runnerOptions
   const logs: RunnerLogs = {error: [], log: [], warn: []}
   const console = cliConsole ?? createRunnerConsole(logs)
-  let envs = {}
 
   const arch = os.arch()
   const {env: processEnv, platform} = process
@@ -89,7 +90,8 @@ export async function runBuild(
     },
     console,
   )
-  envs = packConfiguration.envs
+
+  const {envs, envsForRun} = packConfiguration
 
   let resolvedImageName = imageName
 
@@ -154,6 +156,8 @@ export async function runBuild(
   return {
     code: result.code ?? '',
     command: result.command,
+    containerRuntime,
+    envsForRun,
     exitCode: result.exitCode ?? 1,
     failed: result.failed,
     imageName: resolvedImageName,

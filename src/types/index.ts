@@ -2,6 +2,12 @@ export interface Flags {
   [key: string]: boolean | number | string | string[]
 }
 
+export interface EnvsForRun {
+  DOCKER_HOST?: string
+  TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE?: string
+  TESTCONTAINERS_RYUK_DISABLED?: string
+  TESTCONTAINERS_RYUK_PRIVILEGED?: string
+}
 export interface Envs {
   [key: string]: string
 }

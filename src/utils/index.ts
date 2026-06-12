@@ -6,7 +6,7 @@ import path, {join} from 'node:path'
 import url from 'node:url'
 
 import {CLONED_REPOS_TMP_DIRNAME} from '../constants/index.js'
-import {Envs, Flags, RunnerConsole} from '../types/index.js'
+import {Envs, EnvsForRun, Flags, RunnerConsole} from '../types/index.js'
 
 export function getPackUrl(platform: string, arch: string, packVersion: string) {
   const packNamingConvention = getPackNamingConvention(arch, platform)
@@ -266,7 +266,7 @@ export async function configureContainerRuntime(
   containerRuntime: string,
   target: {arch: string; platform: string},
   console: RunnerConsole,
-): Promise<{envs: Envs; flags: string[]}> {
+): Promise<{envs: Envs; envsForRun: EnvsForRun; flags: string[]}> {
   if (containerRuntime === 'podman' && target.platform === 'darwin' && target.arch === 'arm64') {
     return configurePodmanOnDarwinArm64(console)
   }
@@ -304,10 +304,9 @@ export async function configureContainerRuntime(
   }
 
   console.error(`Building apps with paicku on ${target.platform} ${target.arch} is not yet supported`)
-  return {envs: {}, flags: []}
 }
 
-function configurePodmanOnLinuxAmd64(): {envs: Envs; flags: string[]} {
+function configurePodmanOnLinuxAmd64(): {envs: Envs; envsForRun: EnvsForRun; flags: string[]} {
   const podmandInfo = execFileSync('podman', ['info', '-f', '{{.Host.RemoteSocket.Path}}'], {
     encoding: 'utf8',
   })
@@ -316,20 +315,23 @@ function configurePodmanOnLinuxAmd64(): {envs: Envs; flags: string[]} {
 
   return {
     envs: {DOCKER_HOST: `unix://${podmandInfo.trim()}`},
+    envsForRun: {DOCKER_HOST: `unix://${podmandInfo.trim()}`},
     flags: ['--docker-host', 'inherit'],
   }
 }
 
-function configureDockerOnLinuxAmd64(): {envs: Envs; flags: string[]} {
-  return {envs: {}, flags: []}
+function configureDockerOnLinuxAmd64(): {envs: Envs; envsForRun: EnvsForRun; flags: string[]} {
+  return {envs: {}, envsForRun: {}, flags: []}
 }
 
-function configureDockerOnDarwinArm64(): {envs: Envs; flags: string[]} {
-  return {envs: {}, flags: []}
+function configureDockerOnDarwinArm64(): {envs: Envs; envsForRun: EnvsForRun; flags: string[]} {
+  return {envs: {}, envsForRun: {}, flags: []}
 }
 
 // eslint-disable-next-line complexity
-async function configurePodmanOnDarwinArm64(console: RunnerConsole): Promise<{envs: Envs; flags: string[]}> {
+async function configurePodmanOnDarwinArm64(
+  console: RunnerConsole,
+): Promise<{envs: Envs; envsForRun: EnvsForRun; flags: string[]}> {
   let listPodmanConnections
   try {
     const podmandSystemConnectionLsCommand = execFileSync(
@@ -347,11 +349,20 @@ async function configurePodmanOnDarwinArm64(console: RunnerConsole): Promise<{en
 
     if (!listPodmanConnections) {
       console.error('Ensure you have installed podman correctly.')
-      return {envs: {}, flags: []}
     }
   } catch {
     console.error('Ensure you have installed podman correctly.')
-    return {envs: {}, flags: []}
+  }
+
+  let isPodmanRootless: boolean
+  try {
+    const hostSecurityRootless = execFileSync('podman', ['info', '--format="{{.Host.Security.Rootless}}"'], {
+      encoding: 'utf8',
+    })
+
+    isPodmanRootless = hostSecurityRootless.trim() === 'true'
+  } catch {
+    console.error('Ensure you have installed podman correctly.')
   }
 
   try {
@@ -360,7 +371,6 @@ async function configurePodmanOnDarwinArm64(console: RunnerConsole): Promise<{en
     })
   } catch {
     console.error('Ensure you have installed podman correctly.')
-    return {envs: {}, flags: []}
   }
 
   const podmanMachineUri = url.parse(listPodmanConnections.split(' ')[0])
@@ -376,7 +386,6 @@ async function configurePodmanOnDarwinArm64(console: RunnerConsole): Promise<{en
     !podmanMachineUri.pathname
   ) {
     console.error('Ensure you have installed podman correctly.')
-    return {envs: {}, flags: []}
   }
 
   let isSshKeyLoaded = false
@@ -401,7 +410,6 @@ async function configurePodmanOnDarwinArm64(console: RunnerConsole): Promise<{en
       execFileSync('ssh-add', ['-k', identityFilepath])
     } else {
       console.error('SSH key is required to access Podman machine. Please add it to ssh-agent to continue.')
-      return {envs: {}, flags: []}
     }
   }
 
@@ -419,7 +427,7 @@ async function configurePodmanOnDarwinArm64(console: RunnerConsole): Promise<{en
     })
     if (!addHostAnswer) {
       console.error('Podman machine host is required to be in known_hosts file. Aborting configuration.')
-      return {envs: {}, flags: []}
+      return {envs: {}, envsForRun: {}, flags: []}
     }
 
     // Get the fingerprint with ssh command from the Podman machine host.
@@ -433,7 +441,6 @@ async function configurePodmanOnDarwinArm64(console: RunnerConsole): Promise<{en
       )
     } catch (error) {
       console.error(`Failed to fetch fingerprint from Podman machine host: ${error}`)
-      return {envs: {}, flags: []}
     }
 
     // Get the fingerprint with ssh-keyscan from the Podman machine host.
@@ -446,7 +453,6 @@ async function configurePodmanOnDarwinArm64(console: RunnerConsole): Promise<{en
       )
     } catch (error) {
       console.error(`Failed to scan Podman machine host fingerprint: ${error}`)
-      return {envs: {}, flags: []}
     }
 
     let podmanPublicKeyToFingerprint: string
@@ -457,12 +463,10 @@ async function configurePodmanOnDarwinArm64(console: RunnerConsole): Promise<{en
       })
     } catch (error) {
       console.error(`Failed to get fingerprint: ${error}`)
-      return {envs: {}, flags: []}
     }
 
     if (podmanPublicKeyToFingerprint.split(' ')[1] !== podmanMachineSshFingerprint.split(' ')[1]) {
       console.error('Podman machine host fingerprint does not match the public key fingerprint.')
-      return {envs: {}, flags: []}
     }
 
     try {
@@ -470,12 +474,18 @@ async function configurePodmanOnDarwinArm64(console: RunnerConsole): Promise<{en
       await fs.appendFile(knownHostsPath, podmanPublicKey)
     } catch (error) {
       console.error(`Failed to write to known_hosts file: ${error}`)
-      return {envs: {}, flags: []}
     }
+  }
+
+  const envsForRun = {
+    DOCKER_HOST: podmanMachineUri.href,
+    TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE: '/var/run/docker.sock',
+    ...(isPodmanRootless ? {TESTCONTAINERS_RYUK_DISABLED: 'true'} : {TESTCONTAINERS_RYUK_PRIVILEGED: 'true'}),
   }
 
   return {
     envs: {DOCKER_HOST: podmanMachineUri.href},
+    envsForRun,
     flags: ['--docker-host', 'inherit'],
   }
 }
