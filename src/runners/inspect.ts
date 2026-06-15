@@ -20,7 +20,7 @@ export interface InspectResult {
 type InspectRunnerOptions = {
   captureStdout?: boolean
   cwd?: string
-  env?: Record<string, string>
+  env?: Record<string, string | undefined>
 }
 
 function parseCommandJsonOutput(stdout: string): {data: unknown; parseError: Error | undefined} {

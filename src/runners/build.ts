@@ -36,7 +36,7 @@ type BuildRunnerOptions = {
   captureStdout?: boolean
   console?: RunnerConsole
   cwd?: string
-  env?: Record<string, string>
+  env?: Record<string, string | undefined>
 }
 
 export async function runBuild(

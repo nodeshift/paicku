@@ -14,7 +14,7 @@ const __dirname = path.dirname(__filename)
 
 export type PaickuOptions = {
   cwd?: string
-  env?: Record<string, string>
+  env?: Record<string, string | undefined>
   executablePath?: string
 }
 
@@ -36,18 +36,21 @@ export type PaickuClient = {
 }
 
 export function createPaicku(options: PaickuOptions = {}): PaickuClient {
-  let resolvedExecutablePath: string | undefined
+  let resolvePromise: Promise<{logs: string[]; resolvedExecutablePath: string}> | undefined
 
-  const resolveExecutablePath = async (): Promise<{logs: string[]; resolvedExecutablePath: string}> => {
-    if (options.executablePath) {
-      return {logs: [], resolvedExecutablePath: options.executablePath}
-    }
+  const resolveExecutablePath = (): Promise<{logs: string[]; resolvedExecutablePath: string}> => {
+    resolvePromise ??= (async () => {
+      if (options.executablePath) {
+        return {logs: [], resolvedExecutablePath: options.executablePath}
+      }
 
-    const {cacheDir} = await Config.load(path.join(__dirname, '..'))
-    const {logs} = await downloadPack(cacheDir)
-    resolvedExecutablePath = path.join(cacheDir, 'pack')
+      const {cacheDir} = await Config.load(path.join(__dirname, '..'))
+      const {logs} = await downloadPack(cacheDir)
 
-    return {logs, resolvedExecutablePath}
+      return {logs, resolvedExecutablePath: path.join(cacheDir, 'pack')}
+    })()
+
+    return resolvePromise
   }
 
   return {
@@ -85,11 +88,16 @@ export function createPaicku(options: PaickuOptions = {}): PaickuClient {
       async download(imageName: string, sbomOptions: SbomDownloadOptions = {}): Promise<SbomDownloadResult> {
         const {resolvedExecutablePath} = await resolveExecutablePath()
 
-        return runSbomDownload(imageName, resolvedExecutablePath, {...sbomOptions, 'no-color': true}, {
-          captureStdout: true,
-          cwd: options.cwd,
-          env: options.env,
-        })
+        return runSbomDownload(
+          imageName,
+          resolvedExecutablePath,
+          {...sbomOptions, 'no-color': true},
+          {
+            captureStdout: true,
+            cwd: options.cwd,
+            env: options.env,
+          },
+        )
       },
     },
   }

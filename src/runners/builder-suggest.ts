@@ -18,7 +18,7 @@ export interface BuilderSuggestResult {
 type BuilderSuggestRunnerOptions = {
   captureStdout?: boolean
   cwd?: string
-  env?: Record<string, string>
+  env?: Record<string, string | undefined>
 }
 
 export async function runBuilderSuggest(

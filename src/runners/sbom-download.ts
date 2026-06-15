@@ -18,7 +18,7 @@ export interface SbomDownloadResult {
 type SbomDownloadRunnerOptions = {
   captureStdout?: boolean
   cwd?: string
-  env?: Record<string, string>
+  env?: Record<string, string | undefined>
 }
 
 
