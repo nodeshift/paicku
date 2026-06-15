@@ -9,6 +9,8 @@ export {
   type InspectResult,
   type SbomDownloadOptions,
   type SbomDownloadResult,
+  type StartOptions,
+  type StartResult,
 } from './runners/index.js'
 export {type PaickuBuildOptions, type RunnerLogs} from './types/index.js'
 

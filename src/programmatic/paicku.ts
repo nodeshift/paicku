@@ -7,6 +7,7 @@ import {type BuildResult, runBuild} from '../runners/build.js'
 import {type BuilderSuggestOptions, type BuilderSuggestResult, runBuilderSuggest} from '../runners/builder-suggest.js'
 import {type InspectOptions, type InspectResult, runInspect} from '../runners/inspect.js'
 import {type SbomDownloadOptions, type SbomDownloadResult, runSbomDownload} from '../runners/sbom-download.js'
+import {type StartOptions, type StartResult, runStart} from '../runners/start.js'
 import {type PaickuBuildOptions} from '../types/index.js'
 
 const __filename = fileURLToPath(import.meta.url)
@@ -33,6 +34,7 @@ export type PaickuClient = {
   builder: PaickuBuilderClient
   inspect(imageName: string, options?: InspectOptions): Promise<InspectResult>
   sbom: PaickuSbomClient
+  start(options: StartOptions): Promise<StartResult>
 }
 
 export function createPaicku(options: PaickuOptions = {}): PaickuClient {
@@ -99,6 +101,11 @@ export function createPaicku(options: PaickuOptions = {}): PaickuClient {
           },
         )
       },
+    },
+    async start(startOptions: StartOptions): Promise<StartResult> {
+      return runStart(startOptions, {
+        env: options.env,
+      })
     },
   }
 }

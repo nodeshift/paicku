@@ -14,7 +14,8 @@
     "adm-zip": "^0.5.16",
     "execa": "^9.6.1",
     "lookpath": "^1.2.3",
-    "tar": "^7.4.3"
+    "tar": "^7.4.3",
+    "testcontainers": "^12.0.1"
   },
   "devDependencies": {
     "@oclif/prettier-config": "^0.2.1",
