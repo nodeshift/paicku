@@ -19,18 +19,19 @@ describe('paicku package - builder suggest', () => {
     await rm(cacheDir, {force: true, recursive: true})
   })
 
-  it('createPaicku().builder("suggest") returns structured result', async () => {
+  it('createPaicku().builder.suggest() returns structured result', async () => {
     const paicku = createPaicku({executablePath})
-    const result = await paicku.builder('suggest')
+    const result = await paicku.builder.suggest()
 
     expect(result.failed).to.be.false
     expect(result.stdout.trim()).to.equal('Suggested builders:\n  - paketobuildpacks/builder:base')
     expect(result.command).to.include('builder suggest')
+    expect(result.command).to.include('--no-color')
   })
 
-  it('createPaicku().builder("suggest") with verbose flag', async () => {
+  it('createPaicku().builder.suggest() with verbose flag', async () => {
     const paicku = createPaicku({executablePath})
-    const result = await paicku.builder('suggest', {
+    const result = await paicku.builder.suggest({
       verbose: true,
     })
 

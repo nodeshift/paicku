@@ -1,5 +1,5 @@
 export {type DownloadPackOptions, type DownloadPackResult, downloadPack} from './hooks/prerun/download-pack.js'
-export {type PaickuBuildOptions, type PaickuClient, type PaickuOptions, createPaicku} from './programmatic/paicku.js'
+export {type PaickuBuilderClient, type PaickuClient, type PaickuOptions, type PaickuSbomClient, createPaicku} from './programmatic/paicku.js'
 export {
   type BuildOptions,
   type BuildResult,
@@ -10,6 +10,6 @@ export {
   type SbomDownloadOptions,
   type SbomDownloadResult,
 } from './runners/index.js'
-export {type RunnerLogs} from './types/index.js'
+export {type PaickuBuildOptions, type RunnerLogs} from './types/index.js'
 
 export {run} from '@oclif/core'

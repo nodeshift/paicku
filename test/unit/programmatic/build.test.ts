@@ -36,8 +36,9 @@ describe('paicku package - build', () => {
 
   it('createPaicku().build returns structured result', async () => {
     const paicku = createPaicku({executablePath})
-    const result = await paicku.build('my-image', {
+    const result = await paicku.build({
       builder: 'docker.io/paketobuildpacks/builder-ubi8-base',
+      imageName: 'my-image',
       path: '/path/to/app',
     })
 
@@ -45,13 +46,15 @@ describe('paicku package - build', () => {
     expect(result.stdout.at(-1)?.trim()).to.equal("Successfully built image 'my-image'")
     expect(result.imageName).to.equal('my-image')
     expect(result.command).to.include('build my-image')
+    expect(result.command).to.include('--no-color')
   })
 
   it('createPaicku().build collects logs in separate arrays', async () => {
     const paicku = createPaicku({executablePath})
 
-    const result = await paicku.build('my-image', {
+    const result = await paicku.build({
       builder: 'docker.io/paketobuildpacks/builder-ubi8-base',
+      imageName: 'my-image',
       path: '/path/to/app',
     })
 
@@ -63,8 +66,9 @@ describe('paicku package - build', () => {
     const paicku = createPaicku({executablePath})
 
     try {
-      await paicku.build('my-image', {
+      await paicku.build({
         builder: 'paketobuildpacks/builder-ubi8-base',
+        imageName: 'my-image',
         path: '/path/to/app',
       })
       expect.fail('Expected build to throw')

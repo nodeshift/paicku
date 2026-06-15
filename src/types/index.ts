@@ -1,3 +1,5 @@
+import {type BuildOptions} from '../runners/build.js'
+
 export interface Flags {
   [key: string]: boolean | number | string | string[]
 }
@@ -17,6 +19,10 @@ export type RunnerLogs = {
   log: string[]
   warn: string[]
 }
+
+export type PaickuBuildOptions = {
+  imageName?: string
+} & BuildOptions
 
 export type RunnerConsole = {
   error: (message: string, options?: {exit?: number}) => never

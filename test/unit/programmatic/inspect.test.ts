@@ -30,6 +30,7 @@ describe('paicku package', () => {
     expect(result.stdout.trim()).to.equal('{"remote":null,"local":null}')
     expect(result.parsedStdout).to.deep.equal({local: null, remote: null})
     expect(result.command).to.include('--bom')
+    expect(result.command).to.include('--no-color')
   })
 
   it('createPaicku().inspect parses pack inspect json output', async () => {
