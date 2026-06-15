@@ -1,30 +1,30 @@
 `paicku builder`
 ================
 
-Interact with builders
+Display suggested builders for the given application
 
 * [`paicku builder suggest`](#paicku-builder-suggest)
 
 ## `paicku builder suggest`
 
-Interact with builders
+Display suggested builders for the given application
 
 ```
 USAGE
-  $ paicku builder suggest [--forceColor] [--noColor] [-q] [--timestamps] [-v] [-h]
+  $ paicku builder suggest [--force-color] [--no-color] [-q] [--timestamps] [-v] [-h]
 
 FLAGS
-  -h, --help  Help for 'builder'
+  -h, --help  Help for 'builder suggest'
 
 GLOBAL FLAGS
-  -q, --quiet       Show less output
-  -v, --verbose     Show more output
-      --forceColor  Force color output
-      --noColor     Disable color output
-      --timestamps  Enable timestamps in output
+  -q, --quiet        Show less output
+  -v, --verbose      Show more output
+      --force-color  Force color output
+      --no-color     Disable color output
+      --timestamps   Enable timestamps in output
 
 DESCRIPTION
-  Interact with builders
+  Display suggested builders for the given application
 
 ALIASES
   $ paicku builder suggest
