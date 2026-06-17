@@ -8,7 +8,8 @@ import {type BuilderSuggestOptions, type BuilderSuggestResult, runBuilderSuggest
 import {type InspectOptions, type InspectResult, runInspect} from '../runners/inspect.js'
 import {type SbomDownloadOptions, type SbomDownloadResult, runSbomDownload} from '../runners/sbom-download.js'
 import {type StartOptions, type StartResult, runStart} from '../runners/start.js'
-import {type PaickuBuildOptions} from '../types/index.js'
+import {type PaickuBuildOptions, type RunnerLogs} from '../types/index.js'
+import {createRunnerConsole} from '../types/index.js'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -59,46 +60,51 @@ export function createPaicku(options: PaickuOptions = {}): PaickuClient {
     async build(buildOptions: PaickuBuildOptions = {}): Promise<BuildResult> {
       const {imageName, ...flags} = buildOptions
       const {resolvedExecutablePath} = await resolveExecutablePath()
+      const logs: RunnerLogs = {error: [], log: [], warn: []}
+      const console = createRunnerConsole(logs)
 
       return runBuild(imageName, {...flags, 'no-color': true}, resolvedExecutablePath, {
-        captureStdout: true,
+        console,
         cwd: options.cwd,
         env: options.env,
+        logs,
       })
     },
     builder: {
       async suggest(builderOptions: BuilderSuggestOptions = {}): Promise<BuilderSuggestResult> {
         const {resolvedExecutablePath} = await resolveExecutablePath()
+        const logs: RunnerLogs = {error: [], log: [], warn: []}
+        const console = createRunnerConsole(logs)
 
         return runBuilderSuggest({...builderOptions, 'no-color': true}, resolvedExecutablePath, {
-          captureStdout: true,
+          console,
           cwd: options.cwd,
           env: options.env,
+          logs,
         })
       },
     },
     async inspect(imageName: string, inspectOptions: InspectOptions = {}): Promise<InspectResult> {
       const {resolvedExecutablePath} = await resolveExecutablePath()
-
+      const logs: RunnerLogs = {error: [], log: [], warn: []}
+      const console = createRunnerConsole(logs)
       return runInspect(imageName, {...inspectOptions, 'no-color': true}, resolvedExecutablePath, {
-        captureStdout: true,
+        console,
         cwd: options.cwd,
         env: options.env,
+        logs,
       })
     },
     sbom: {
       async download(imageName: string, sbomOptions: SbomDownloadOptions = {}): Promise<SbomDownloadResult> {
         const {resolvedExecutablePath} = await resolveExecutablePath()
-
+        const logs: RunnerLogs = {error: [], log: [], warn: []}
+        const console = createRunnerConsole(logs)
         return runSbomDownload(
           imageName,
           resolvedExecutablePath,
+          {console, cwd: options.cwd, env: options.env, logs},
           {...sbomOptions, 'no-color': true},
-          {
-            captureStdout: true,
-            cwd: options.cwd,
-            env: options.env,
-          },
         )
       },
     },

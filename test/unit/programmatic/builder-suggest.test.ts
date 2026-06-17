@@ -24,7 +24,7 @@ describe('paicku package - builder suggest', () => {
     const result = await paicku.builder.suggest()
 
     expect(result.failed).to.be.false
-    expect(result.stdout.trim()).to.equal('Suggested builders:\n  - paketobuildpacks/builder:base')
+    expect(result.stdout.join('\n').trim()).to.equal('Suggested builders:\n  - paketobuildpacks/builder:base')
     expect(result.command).to.include('builder suggest')
     expect(result.command).to.include('--no-color')
   })

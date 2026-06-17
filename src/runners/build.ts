@@ -5,7 +5,7 @@ import path from 'node:path'
 
 import {CONTAINER_RUNTIMES_IN_PRIORITY, DEFAULT_BUILDER_IMAGE} from '../constants/index.js'
 import {buildFlags} from '../flargs/build.js'
-import {EnvsForRun, RunnerConsole, RunnerLogs, createRunnerConsole} from '../types/index.js'
+import {EnvsForRun, RunnerConsole, RunnerLogs} from '../types/index.js'
 import {
   cloneRepo,
   configureContainerRuntime,
@@ -33,21 +33,19 @@ export interface BuildResult {
 }
 
 type BuildRunnerOptions = {
-  captureStdout?: boolean
-  console?: RunnerConsole
+  console: RunnerConsole
   cwd?: string
   env?: Record<string, string | undefined>
+  logs?: RunnerLogs
 }
 
 export async function runBuild(
   imageName: string | undefined,
   options: BuildOptions,
   executablePath: string,
-  runnerOptions: BuildRunnerOptions = {},
+  runnerOptions: BuildRunnerOptions,
 ): Promise<BuildResult> {
-  const {captureStdout = false, console: cliConsole, cwd, env: runnerEnv} = runnerOptions
-  const logs: RunnerLogs = {error: [], log: [], warn: []}
-  const console = cliConsole ?? createRunnerConsole(logs)
+  const {console, cwd, env: runnerEnv, logs = {error: [], log: [], warn: []}} = runnerOptions
 
   const arch = os.arch()
   const {env: processEnv, platform} = process
@@ -123,19 +121,18 @@ export async function runBuild(
 
   const execOptions = {
     cwd,
-    env: {...processEnv, ...envs, FORCE_COLOR: '1', ...runnerEnv},
+    env: {
+      ...processEnv,
+      ...envs,
+      ...runnerEnv,
+    },
   }
 
-  const execaOptions = captureStdout
-    ? {
-        ...execOptions,
-        reject: false,
-        stdio: ['inherit', 'pipe', 'pipe'] as const,
-      }
-    : {
-        ...execOptions,
-        stdio: 'inherit' as const,
-      }
+  const execaOptions = {
+    ...execOptions,
+    reject: false,
+    stdio: ['inherit', 'pipe', 'pipe'] as const,
+  }
 
   const subprocess = execa(executablePath, packArgs, execaOptions)
 
@@ -152,6 +149,10 @@ export async function runBuild(
   }
 
   const result = await subprocess
+
+  if (result.failed) {
+    console.error(`Build failed.`, {exit: result.exitCode ?? 1})
+  }
 
   return {
     code: result.code ?? '',

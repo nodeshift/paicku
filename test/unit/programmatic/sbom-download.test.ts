@@ -24,7 +24,7 @@ describe('paicku package - sbom download', () => {
     const result = await paicku.sbom.download('my-image')
 
     expect(result.failed).to.be.false
-    expect(result.stdout.trim()).to.equal('SBOM downloaded successfully')
+    expect(result.stdout.join('\n').trim()).to.equal('SBOM downloaded successfully')
     expect(result.command).to.include('sbom download my-image')
     expect(result.command).to.include('--no-color')
   })

@@ -2,6 +2,7 @@ import {Interfaces, Parser} from '@oclif/core'
 import {execa} from 'execa'
 
 import {sbomArgs, sbomFlags} from '../flargs/sbom-download.js'
+import {RunnerConsole, RunnerLogs} from '../types/index.js'
 import {parseFlags} from '../utils/index.js'
 
 export type SbomDownloadOptions = Partial<Interfaces.InferredFlags<typeof sbomFlags>>
@@ -11,24 +12,26 @@ export interface SbomDownloadResult {
   command: string
   exitCode: number
   failed: boolean
-  stderr: string
-  stdout: string
+  stderr: string[]
+  stdout: string[]
 }
 
 type SbomDownloadRunnerOptions = {
-  captureStdout?: boolean
+  console: RunnerConsole
   cwd?: string
   env?: Record<string, string | undefined>
+  logs?: RunnerLogs
 }
-
 
 export async function runSbomDownload(
   imageName: string,
   executablePath: string,
+  runnerOptions: SbomDownloadRunnerOptions,
   options: SbomDownloadOptions = {},
-  runnerOptions: SbomDownloadRunnerOptions = {},
 ): Promise<SbomDownloadResult> {
-  const {captureStdout = false, cwd, env} = runnerOptions
+  const {console, cwd, env: runnerEnv, logs = {error: [], log: [], warn: []}} = runnerOptions
+  const {env: processEnv} = process
+
   const argvs = [imageName]
 
   const flargs = parseFlags(options)
@@ -41,38 +44,44 @@ export async function runSbomDownload(
 
   const execOptions = {
     cwd,
-    ...(env ? {env: {...process.env, ...env}} : {}),
+    env: {
+      ...processEnv,
+      ...runnerEnv,
+    },
   }
 
-  if (captureStdout) {
-    const result = await execa(executablePath, packArgs, {
-      ...execOptions,
-      reject: false,
-      stdio: ['inherit', 'pipe', 'pipe'],
-    })
-
-
-    return {
-      code: result.code ?? '',
-      command: result.command,
-      exitCode: result.exitCode ?? 1,
-      failed: result.failed,
-      stderr: result.stderr || result.shortMessage || '',
-      stdout: result.stdout ?? '',
-    }
-  }
-
-  await execa(executablePath, packArgs, {
+  const execaOptions = {
     ...execOptions,
-    stdio: 'inherit',
-  })
+    reject: false,
+    stdio: ['inherit', 'pipe', 'pipe'] as const,
+  }
+
+  const subprocess = execa(executablePath, packArgs, execaOptions)
+
+  if (subprocess.stdout) {
+    subprocess.stdout.on('data', (chunk) => {
+      console.log(chunk.toString().trimEnd())
+    })
+  }
+
+  if (subprocess.stderr) {
+    subprocess.stderr.on('data', (chunk) => {
+      console.logToStderr(chunk.toString().trimEnd())
+    })
+  }
+
+  const result = await subprocess
+
+  if (result.failed) {
+    console.error(`sbom download failed.`, {exit: result.exitCode ?? 1})
+  }
 
   return {
-    code: "",
-    command: "",
-    exitCode: 0,
-    failed: false,
-    stderr: '',
-    stdout: '',
+    code: result.code ?? '',
+    command: result.command,
+    exitCode: result.exitCode ?? 1,
+    failed: result.failed,
+    stderr: [...logs.warn, ...logs.error],
+    stdout: logs.log,
   }
 }
