@@ -22,6 +22,11 @@ jobs:
             root: "rootless"
             label: "U24-P5-RL"
 
+          - runner: "ubuntu-26.04"
+            runtime: "podman5"
+            root: "rootless"
+            label: "U26-P5-RL"
+
           - runner: "ubuntu-22.04"
             runtime: "docker"
             label: "U22-D-RL"
@@ -29,6 +34,10 @@ jobs:
           - runner: "ubuntu-24.04"
             runtime: "docker"
             label: "U24-D-RL"
+
+          - runner: "ubuntu-26.04"
+            runtime: "docker"
+            label: "U26-D-RL"
 
           # - runner: "macos-13"
           #   runtime: "docker"

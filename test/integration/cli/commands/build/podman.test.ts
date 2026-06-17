@@ -23,6 +23,7 @@ describe('build (podman)', () => {
       testdataPath,
       '--container-runtime',
       'podman',
+      '--no-color',
     ].join(' ')
 
     const {error, stdout} = await runCommand(flargs)
