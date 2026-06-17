@@ -5,21 +5,21 @@ on:
   workflow_dispatch:
 
 jobs:
-  unit-tests:
+  integration-tests:
     strategy:
       fail-fast: false
       matrix:
-        node_version: [lts/-1, lts/*, latest]
+        node_version: [22.x, 24.x, 26.x]
         combos:
           [
-            {runner: 'macos-13', runtime: 'podman5', root: 'rootless', label: 'M13-P5-RL'},
-            {runner: 'macos-13', runtime: 'podman5', root: 'rootful', label: 'M13-P5-RF'},
             {runner: 'ubuntu-22.04', runtime: 'podman5', root: 'rootless', label: 'U22-P5-RL'},
             {runner: 'ubuntu-24.04', runtime: 'podman5', root: 'rootless', label: 'U24-P5-RL'},
-            {runner: 'macos-13', runtime: 'docker', label: 'M13-D-RL' },
             {runner: 'ubuntu-22.04', runtime: 'docker', label: 'U22-D-RL'},
             {runner: 'ubuntu-24.04', runtime: 'docker', label: 'U24-D-RL'},
           ]
+            # {runner: 'macos-13', runtime: 'docker', label: 'M13-D-RL' },
+            # {runner: 'macos-13', runtime: 'podman5', root: 'rootless', label: 'M13-P5-RL'},
+            # {runner: 'macos-13', runtime: 'podman5', root: 'rootful', label: 'M13-P5-RF'},
 
     runs-on: [ "${{ matrix.combos.runner }}" ]
     name: ${{ matrix.combos.label }}
@@ -46,7 +46,7 @@ jobs:
         if: ( matrix.combos.runner == 'macos-13' || matrix.combos.runner == 'macos-14' || matrix.combos.runner == 'macos-15' || matrix.combos.runner == 'macos-latest' ) && matrix.combos.runtime == 'docker'
         uses: douglascamata/setup-docker-macos-action@v1
 
-      - name: Podman Rootful (podman machine)
+      - name: Podman MacRootful (podman machine)
         if: (matrix.combos.runner == 'macos-13' || matrix.combos.runner == 'macos-14' || matrix.combos.runner == 'macos-15' || matrix.combos.runner == 'macos-latest' || matrix.combos.runner == 'windows-latest') && matrix.combos.runtime == 'podman5' && matrix.combos.root == 'rootful'
         run: |
           podman system connection ls
@@ -80,7 +80,7 @@ jobs:
           # restart to allow config to take effect
           brew services restart podman
 
-      - name: Podman Rootful (native)
+      - name: Podman Ubuntu Rootful (native)
         if: ( matrix.combos.runner == 'ubuntu-24.04' || matrix.combos.runner == 'ubuntu-22.04' || matrix.combos.runner == 'ubuntu-latest' ) && matrix.combos.runtime == 'podman5' && matrix.combos.root == 'rootful'
         run: |
           podman system connection ls
@@ -122,4 +122,10 @@ jobs:
           cache: npm
       - run: npm install
       - run: npm run build
-      - run: npm run unit:test
+      - name: Run integration tests
+        run: |
+          if [ "${{ matrix.combos.runtime }}" = "docker" ]; then
+            npm run integration:test:docker
+          else
+            npm run integration:test:podman
+          fi

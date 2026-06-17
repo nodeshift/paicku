@@ -1,32 +1,30 @@
-import {Command, Flags} from '@oclif/core'
+import {Command} from '@oclif/core'
+import path from 'node:path'
 
-import {globalFlags} from '../../global/flags.js'
-import {parseFlags, runPack} from '../../utils/index.js'
+import {builderSuggestArgs, builderSuggestFlags} from '../../flargs/builder-suggest.js'
+import {runBuilderSuggest} from '../../runners/builder-suggest.js'
 
 export default class BuilderSuggest extends Command {
-  static aliases = ['builder:suggest', 'builders:suggest']
+  static readonly aliases = ['builder:suggest', 'builders:suggest']
 
-  static override args = {}
+  static override readonly args = builderSuggestArgs
 
-  static override description = 'Interact with builders'
+  static override readonly description = 'Display suggested builders for the given application'
 
-  static override examples = ['<%= config.bin %> <%= command.id %>']
+  static override readonly examples = ['<%= config.bin %> <%= command.id %>']
 
-  static override flags = {
-    ...globalFlags,
-    help: Flags.boolean({char: 'h', description: "Help for 'builder'"}),
-  }
+  static override readonly flags = builderSuggestFlags
 
   public async run(): Promise<void> {
     const {flags} = await this.parse(BuilderSuggest)
 
-    const flagsArray = parseFlags(flags)
-
-    await runPack(
-      ['builder', 'suggest', ...flagsArray],
-      {error: this.error.bind(this), log: this.log.bind(this)},
-      {},
-      this.config.cacheDir,
-    )
+    await runBuilderSuggest(flags, path.join(this.config.cacheDir, 'pack'), {
+      console: {
+        error: this.error.bind(this),
+        log: this.log.bind(this),
+        logToStderr: this.logToStderr.bind(this),
+        warn: this.warn.bind(this),
+      },
+    })
   }
 }

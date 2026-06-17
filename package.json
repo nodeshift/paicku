@@ -8,11 +8,14 @@
   },
   "bugs": "https://github.com/nodeshift/paicku/issues",
   "dependencies": {
+    "@inquirer/prompts": "^8.1.0",
     "@oclif/core": "^4",
     "@oclif/plugin-help": "^6",
     "adm-zip": "^0.5.16",
+    "execa": "^9.6.1",
     "lookpath": "^1.2.3",
-    "tar": "^7.4.3"
+    "tar": "^7.4.3",
+    "testcontainers": "^12.0.1"
   },
   "devDependencies": {
     "@oclif/prettier-config": "^0.2.1",
@@ -21,6 +24,7 @@
     "@types/chai": "^4",
     "@types/mocha": "^10",
     "@types/node": "^18",
+    "c8": "^11.0.0",
     "chai": "^4",
     "eslint": "^8",
     "eslint-config-oclif": "^5",
@@ -60,7 +64,7 @@
     "commands": "./dist/commands",
     "hooks": {
       "finally": [
-        "./src/hooks/finally/clean-cloned-repo"
+        "./dist/hooks/finally/clean-cloned-repo"
       ],
       "prerun": "./dist/hooks/prerun/download-pack"
     },
@@ -79,12 +83,20 @@
     "postpack": "shx rm -f oclif.manifest.json",
     "posttest": "npm run lint",
     "prepack": "npm run build && oclif manifest && oclif readme --multi",
-    "test": "npm run unit:test && npm run integration:test",
-    "integration:test": "mocha --forbid-only \"test/integration/**/*.test.ts\"",
-    "integration:test:debug": "mocha \"test/integration/**/*.test.ts\"",
+    "test": "c8 --reporter=lcovonly npm run unit:test",
+    "test:report": "c8 report --reporter=lcovonly && c8 report --reporter=text-summary",
     "unit:test": "mocha --forbid-only \"test/unit/**/*.test.ts\"",
     "unit:test:debug": "mocha --timeout 0 \"test/unit/**/*.test.ts\"",
+    "integration:test:docker": "mocha --forbid-only \"test/integration/**/docker.test.ts\"",
+    "integration:test:podman": "mocha --forbid-only \"test/integration/**/podman.test.ts\"",
     "version": "oclif readme && git add README.md"
   },
-  "types": "dist/index.d.ts"
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  }
 }

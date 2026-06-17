@@ -1,11 +1,12 @@
 import {Flags} from '@oclif/core'
 
 export const globalFlags = {
-  forceColor: Flags.boolean({
+  'force-color': Flags.boolean({
+    default: true,
     description: 'Force color output',
     helpGroup: 'GLOBAL',
   }),
-  noColor: Flags.boolean({
+  'no-color': Flags.boolean({
     description: 'Disable color output',
     helpGroup: 'GLOBAL',
   }),

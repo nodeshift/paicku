@@ -1,34 +1,28 @@
-import {Args, Command, Flags} from '@oclif/core'
+import {Command} from '@oclif/core'
+import path from 'node:path'
 
-import {globalFlags} from '../../global/flags.js'
-import {parseFlags, runPack} from '../../utils/index.js'
+import {sbomArgs, sbomFlags} from '../../flargs/sbom-download.js'
+import {runSbomDownload} from '../../runners/sbom-download.js'
 
 export default class SbomDownload extends Command {
-  static override args = {
-    imageName: Args.string({description: 'Download SBoM from specified image', required: true}),
-  }
+  static override readonly args = sbomArgs
 
-  static override description = 'Interact with SBoM'
+  static override readonly description = 'Interact with SBoM'
 
-  static override examples = ['<%= config.bin %> <%= command.id %> buildpacksio/pack']
+  static override readonly examples = ['<%= config.bin %> <%= command.id %> buildpacksio/pack']
 
-  static override flags = {
-    ...globalFlags,
-    help: Flags.boolean({char: 'h', description: "Help for 'download'"}),
-    'output-dir': Flags.string({char: 'o', default: '.', description: 'Path to export SBoM contents.'}),
-    remote: Flags.string({description: 'Download SBoM of image in remote registry (without pulling image)'}),
-  }
+  static override readonly flags = sbomFlags
 
   public async run(): Promise<void> {
     const {args, flags} = await this.parse(SbomDownload)
 
-    const flagsArray = parseFlags(flags)
-
-    await runPack(
-      ['sbom', 'download', args.imageName, ...flagsArray],
-      {error: this.error.bind(this), log: this.log.bind(this)},
-      {},
-      this.config.cacheDir,
-    )
+    await runSbomDownload(args.imageName, flags, path.join(this.config.cacheDir, 'pack'), {
+      console: {
+        error: this.error.bind(this),
+        log: this.log.bind(this),
+        logToStderr: this.logToStderr.bind(this),
+        warn: this.warn.bind(this),
+      },
+    })
   }
 }

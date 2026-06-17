@@ -11,8 +11,8 @@ Interact with SBoM
 
 ```
 USAGE
-  $ paicku sbom download IMAGENAME [--forceColor] [--noColor] [-q] [--timestamps] [-v] [-h] [-o <value>] [--remote
-    <value>]
+  $ paicku sbom download IMAGENAME [--force-color] [--no-color] [-q] [--timestamps] [-v] [-h] [-o <value>]
+    [--remote <value>]
 
 ARGUMENTS
   IMAGENAME  Download SBoM from specified image
@@ -23,11 +23,11 @@ FLAGS
       --remote=<value>      Download SBoM of image in remote registry (without pulling image)
 
 GLOBAL FLAGS
-  -q, --quiet       Show less output
-  -v, --verbose     Show more output
-      --forceColor  Force color output
-      --noColor     Disable color output
-      --timestamps  Enable timestamps in output
+  -q, --quiet        Show less output
+  -v, --verbose      Show more output
+      --force-color  Force color output
+      --no-color     Disable color output
+      --timestamps   Enable timestamps in output
 
 DESCRIPTION
   Interact with SBoM

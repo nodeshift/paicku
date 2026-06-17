@@ -1,3 +1,4 @@
+import {confirm} from '@inquirer/prompts'
 import {lookpath} from 'lookpath'
 import {execFileSync, spawn} from 'node:child_process'
 import {existsSync, lstatSync, mkdirSync, mkdtempSync} from 'node:fs'
@@ -5,7 +6,7 @@ import path, {join} from 'node:path'
 import url from 'node:url'
 
 import {CLONED_REPOS_TMP_DIRNAME} from '../constants/index.js'
-import {Envs, Flags} from '../types/index.js'
+import {Envs, EnvsForRun, Flags, RunnerConsole} from '../types/index.js'
 
 export function getPackUrl(platform: string, arch: string, packVersion: string) {
   const packNamingConvention = getPackNamingConvention(arch, platform)
@@ -73,39 +74,15 @@ export function getPackNamingConvention(arch: string, platform: string): string 
   throw new Error(`Unsupported platform/architecture: ${platform}/${arch}`)
 }
 
-export async function runPack(
-  flargs: string[],
-  console: {
-    error: (message: string, options?: {exit: number}) => void
-    log: (message: string) => void
-  },
-  envs: Envs,
-  cacheDir: string,
-): Promise<void> {
-  const packBinFilepath = path.join(cacheDir, 'pack')
-
-  for (const [key, value] of Object.entries(envs)) {
-    process.env[key] = value
+// Returns true when the builder image is explicitly prefixed with a registry host.
+export function hasRegistryPrefix(builder: string): boolean {
+  const firstSlash = builder.indexOf('/')
+  if (firstSlash === -1) {
+    return false
   }
 
-  const bin = spawn(packBinFilepath, flargs)
-
-  for await (const chunk of bin.stdout) {
-    console.log(chunk.toString())
-  }
-
-  let errorChunks = ''
-  for await (const errorChunk of bin.stderr) {
-    errorChunks += errorChunk
-  }
-
-  const exitCode = await new Promise<number>((resolve) => {
-    bin.on('close', resolve)
-  })
-
-  if (exitCode) {
-    console.error(errorChunks.toString(), {exit: Number(exitCode)})
-  }
+  const firstSegment = builder.slice(0, firstSlash)
+  return firstSegment === 'localhost' || firstSegment.includes('.') || firstSegment.includes(':')
 }
 
 export function parseFlags(flags: Flags): string[] {
@@ -113,8 +90,14 @@ export function parseFlags(flags: Flags): string[] {
   const flagsArray: string[] = []
 
   for (const [key, value] of Object.entries(flags)) {
-    if (typeof value === 'boolean' && value === true) {
-      flagsArray.push(`--${key}`)
+    if (typeof value === 'boolean') {
+      if (value) {
+        flagsArray.push(`--${key}`)
+      }
+    } else if (Array.isArray(value)) {
+      for (const item of value) {
+        flagsArray.push(`--${key}`, item.toString())
+      }
     } else {
       flagsArray.push(`--${key}`, value.toString())
     }
@@ -255,8 +238,19 @@ export async function filterByInstalledApps(apps: string[], platform: string): P
     }
 
     case 'win32': {
-      execFileSync('where', apps)
-      break
+      try {
+        const result = apps.filter((app) => {
+          try {
+            execFileSync('where', [app], {stdio: 'pipe'})
+            return true
+          } catch {
+            return false
+          }
+        })
+        return result
+      } catch {
+        return []
+      }
     }
   }
 
@@ -271,11 +265,8 @@ export function sortArrayBasedOnOrder(array: string[], order: string[]): string[
 export async function configureContainerRuntime(
   containerRuntime: string,
   target: {arch: string; platform: string},
-  console: {
-    error: (message: string, options?: {exit: number}) => void
-    log: (message: string) => void
-  },
-): Promise<{envs: Envs; flags: string[]}> {
+  console: RunnerConsole,
+): Promise<{envs: Envs; envsForRun: EnvsForRun; flags: string[]}> {
   if (containerRuntime === 'podman' && target.platform === 'darwin' && target.arch === 'arm64') {
     return configurePodmanOnDarwinArm64(console)
   }
@@ -313,98 +304,198 @@ export async function configureContainerRuntime(
   }
 
   console.error(`Building apps with paicku on ${target.platform} ${target.arch} is not yet supported`)
-  return {envs: {}, flags: []}
 }
 
-async function configurePodmanOnLinuxAmd64(): Promise<{envs: Envs; flags: string[]}> {
+function isPodmanRootless(): boolean {
+  return (
+    execFileSync('podman', ['info', '--format="{{.Host.Security.Rootless}}"'], {
+      encoding: 'utf8',
+    }).trim() === 'true'
+  )
+}
+
+function configurePodmanOnLinuxAmd64(): {envs: Envs; envsForRun: EnvsForRun; flags: string[]} {
   const podmandInfo = execFileSync('podman', ['info', '-f', '{{.Host.RemoteSocket.Path}}'], {
     encoding: 'utf8',
   })
 
   execFileSync('systemctl', ['--user', 'start', 'podman.socket'], {encoding: 'utf8'})
 
+  const dockerHost = `unix://${podmandInfo.trim()}`
+  const envsForRun: EnvsForRun = {
+    DOCKER_HOST: dockerHost,
+    ...(isPodmanRootless() ? {TESTCONTAINERS_RYUK_DISABLED: 'true'} : {TESTCONTAINERS_RYUK_PRIVILEGED: 'true'}),
+  }
+
   return {
-    envs: {DOCKER_HOST: `unix://${podmandInfo.trim()}`},
+    envs: {DOCKER_HOST: dockerHost},
+    envsForRun,
     flags: ['--docker-host', 'inherit'],
   }
 }
 
-async function configureDockerOnLinuxAmd64(): Promise<{envs: Envs; flags: string[]}> {
-  return {envs: {}, flags: []}
+function configureDockerOnLinuxAmd64(): {envs: Envs; envsForRun: EnvsForRun; flags: string[]} {
+  return {envs: {}, envsForRun: {}, flags: []}
 }
 
-async function configureDockerOnDarwinArm64(): Promise<{envs: Envs; flags: string[]}> {
-  return {envs: {}, flags: []}
+function configureDockerOnDarwinArm64(): {envs: Envs; envsForRun: EnvsForRun; flags: string[]} {
+  return {envs: {}, envsForRun: {}, flags: []}
 }
 
-async function configurePodmanOnDarwinArm64(console: {
-  error: (message: string, options?: {exit: number}) => void
-  log: (message: string) => void
-}): Promise<{envs: Envs; flags: string[]}> {
-  const podmandSystemConnectionLsCommand = execFileSync(
-    'podman',
-    ['system', 'connection', 'ls', '--format="{{.URI}} {{.Identity}}"'],
-    {
+// eslint-disable-next-line complexity
+async function configurePodmanOnDarwinArm64(
+  console: RunnerConsole,
+): Promise<{envs: Envs; envsForRun: EnvsForRun; flags: string[]}> {
+  let listPodmanConnections
+  try {
+    const podmandSystemConnectionLsCommand = execFileSync(
+      'podman',
+      ['system', 'connection', 'ls', '--format="{{.URI}} {{.Identity}}"'],
+      {
+        encoding: 'utf8',
+      },
+    )
+
+    listPodmanConnections = podmandSystemConnectionLsCommand
+      .split('\n')
+      .map((line) => line.slice(1, -1))
+      .find((line) => line.includes('root'))
+
+    if (!listPodmanConnections) {
+      console.error('Ensure you have installed podman correctly.')
+    }
+  } catch {
+    console.error('Ensure you have installed podman correctly.')
+  }
+
+  let rootless: boolean
+  try {
+    rootless = isPodmanRootless()
+  } catch {
+    console.error('Ensure you have installed podman correctly.')
+  }
+
+  try {
+    execFileSync('podman', ['container', 'ls'], {
       encoding: 'utf8',
-    },
-  )
-
-  const listPodmanConnections = podmandSystemConnectionLsCommand
-    .split('\n')
-    .map((line) => line.slice(1, -1))
-    .find((line) => line.includes('root'))
-
-  if (!listPodmanConnections) {
-    console.error('Failed configuring podman')
-    return {envs: {}, flags: []}
+    })
+  } catch {
+    console.error('Ensure you have installed podman correctly.')
   }
 
   const podmanMachineUri = url.parse(listPodmanConnections.split(' ')[0])
-  const identity = listPodmanConnections.split(' ')[1]
+  const identityFilepath = listPodmanConnections.split(' ')[1]
 
   if (
     !podmanMachineUri ||
-    !identity ||
+    !identityFilepath ||
+    !podmanMachineUri.port ||
     !podmanMachineUri.protocol ||
     !podmanMachineUri.host ||
-    !podmanMachineUri.auth
+    !podmanMachineUri.auth ||
+    !podmanMachineUri.pathname
   ) {
-    console.error('Failed configuring podman')
-    return {envs: {}, flags: []}
+    console.error('Ensure you have installed podman correctly.')
   }
 
-  execFileSync('ssh-add', ['-k', identity])
+  let isSshKeyLoaded = false
+  let listLoadedSshKeys = ''
+  try {
+    listLoadedSshKeys = execFileSync('ssh-add', ['-l'], {encoding: 'utf8'})
+    const keyInfo = execFileSync('ssh-keygen', ['-l', '-f', identityFilepath], {encoding: 'utf8'})
+    if (listLoadedSshKeys.includes(keyInfo.split(' ')[1])) {
+      isSshKeyLoaded = true
+    }
+  } catch {
+    listLoadedSshKeys = ''
+  }
+
+  if (!isSshKeyLoaded) {
+    const loadSshKeyAnswer = await confirm({
+      default: false,
+      message: 'Would you like to add Podman key to ssh-agent for accessing Podman machine?',
+    })
+
+    if (loadSshKeyAnswer) {
+      execFileSync('ssh-add', ['-k', identityFilepath])
+    } else {
+      console.error('SSH key is required to access Podman machine. Please add it to ssh-agent to continue.')
+    }
+  }
+
+  // pack embedded SSH dialer only ever reads the default ~/.ssh/known_hosts file
+  const knownHostsPath = path.join(process.env.HOME || '~', '.ssh', 'known_hosts')
 
   // We check on the known_hosts file if the host is already there
   // if not we fall to the catch block and we add it through ssh command.
   try {
-    execFileSync('ssh-keygen', ['-F', `[${podmanMachineUri.hostname}]:${podmanMachineUri.port}`])
+    execFileSync('ssh-keygen', ['-F', `[${podmanMachineUri.hostname}]:${podmanMachineUri.port}`, '-f', knownHostsPath])
   } catch {
-    const podmanMachineBaseUri = `${podmanMachineUri.protocol}//${podmanMachineUri.auth}@${podmanMachineUri.host}`
-
-    const sshBin = spawn('ssh', ['-i', identity, podmanMachineBaseUri, '-o', 'StrictHostKeyChecking=no', 'exit'])
-
-    for await (const chunk of sshBin.stdout) {
-      console.log(chunk.toString())
-    }
-
-    let errorChunks = ''
-    for await (const errorChunk of sshBin.stderr) {
-      errorChunks += errorChunk
-    }
-
-    const exitCode = await new Promise<number>((resolve) => {
-      sshBin.on('close', resolve)
+    const addHostAnswer = await confirm({
+      default: true,
+      message: `The Podman machine host is not in your known_hosts file. Do you want to add it automatically?`,
     })
-
-    if (exitCode) {
-      console.error(errorChunks.toString())
-      return {envs: {}, flags: []}
+    if (!addHostAnswer) {
+      console.error('Podman machine host is required to be in known_hosts file. Aborting configuration.')
+      return {envs: {}, envsForRun: {}, flags: []}
     }
+
+    // Get the fingerprint with ssh command from the Podman machine host.
+    let podmanMachineSshFingerprint: string
+    try {
+      console.log('Fetching secure fingerprint directly from Podman machine host...')
+      podmanMachineSshFingerprint = execFileSync(
+        'podman',
+        ['machine', 'ssh', 'ssh-keygen -l -f /etc/ssh/ssh_host_ecdsa_key.pub'],
+        {encoding: 'utf8'},
+      )
+    } catch (error) {
+      console.error(`Failed to fetch fingerprint from Podman machine host: ${error}`)
+    }
+
+    // Get the fingerprint with ssh-keyscan from the Podman machine host.
+    let podmanPublicKey: string
+    try {
+      podmanPublicKey = execFileSync(
+        'ssh-keyscan',
+        ['-t', 'ecdsa', '-p', podmanMachineUri.port || '22', podmanMachineUri.hostname || '127.0.0.1'],
+        {encoding: 'utf8'},
+      )
+    } catch (error) {
+      console.error(`Failed to scan Podman machine host fingerprint: ${error}`)
+    }
+
+    let podmanPublicKeyToFingerprint: string
+    try {
+      podmanPublicKeyToFingerprint = execFileSync('ssh-keygen', ['-lf', '-'], {
+        encoding: 'utf8',
+        input: podmanPublicKey.split('\n')[1],
+      })
+    } catch (error) {
+      console.error(`Failed to get fingerprint: ${error}`)
+    }
+
+    if (podmanPublicKeyToFingerprint.split(' ')[1] !== podmanMachineSshFingerprint.split(' ')[1]) {
+      console.error('Podman machine host fingerprint does not match the public key fingerprint.')
+    }
+
+    try {
+      const fs = await import('node:fs/promises')
+      await fs.appendFile(knownHostsPath, podmanPublicKey)
+    } catch (error) {
+      console.error(`Failed to write to known_hosts file: ${error}`)
+    }
+  }
+
+  const envsForRun = {
+    DOCKER_HOST: podmanMachineUri.href,
+    TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE: '/var/run/docker.sock',
+    ...(rootless ? {TESTCONTAINERS_RYUK_DISABLED: 'true'} : {TESTCONTAINERS_RYUK_PRIVILEGED: 'true'}),
   }
 
   return {
     envs: {DOCKER_HOST: podmanMachineUri.href},
+    envsForRun,
     flags: ['--docker-host', 'inherit'],
   }
 }

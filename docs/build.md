@@ -11,8 +11,8 @@ Build an image
 
 ```
 USAGE
-  $ paicku build [IMAGENAME] [--forceColor] [--noColor] [-q] [--timestamps] [-v] [-B <value>] [-b
-    <value>...] [-r <value>] [--cache <value>] [--cache-image <value>] [--clear-cache] [--container-runtime
+  $ paicku build [IMAGENAME] [--json] [--force-color] [--no-color] [-q] [--timestamps] [-v] [-B <value>]
+    [-b <value>...] [-r <value>] [--cache <value>] [--cache-image <value>] [--clear-cache] [--container-runtime
     docker|podman] [--creation-time <value>] [-D <value>] [-d <value>] [--docker-host <value>] [-e <value>...]
     [--env-file <value>...] [--extension <value>...] [--gid <value>] [-h] [--interactive] [--lifecycle-image <value>]
     [--network <value>] [-p <value>] [--platform <value>] [--post-buildpack <value>...] [--pre-buildpack <value>...]
@@ -28,7 +28,7 @@ FLAGS
       Builder image
 
   -D, --default-process=<value>
-      [default: web] Set the default process type
+      Set the default process type
 
   -b, --buildpack=<value>...
       Buildpack to use. One of:
@@ -180,11 +180,12 @@ FLAGS
       Location at which to mount the app dir in the build image
 
 GLOBAL FLAGS
-  -q, --quiet       Show less output
-  -v, --verbose     Show more output
-      --forceColor  Force color output
-      --noColor     Disable color output
-      --timestamps  Enable timestamps in output
+  -q, --quiet        Show less output
+  -v, --verbose      Show more output
+      --force-color  Force color output
+      --json         Format output as json.
+      --no-color     Disable color output
+      --timestamps   Enable timestamps in output
 
 DESCRIPTION
   Build an image
@@ -196,7 +197,7 @@ EXAMPLES
 
   Build and app with a specific image-name and builder
 
-    $ paicku build image-name --builder builder-ubi8-base
+    $ paicku build image-name --builder docker.io/paketobuildpacks/builder-ubi8-base
 
   Build an app from a remote git repository with specifying a sub-directory.
 
@@ -204,7 +205,7 @@ EXAMPLES
 
   Build an app with a specific image-name and builder with a specific local path
 
-    $ paicku build image-name --builder builder-ubi8-base --path /path/to/app
+    $ paicku build image-name --builder docker.io/paketobuildpacks/builder-ubi8-base --path /path/to/app
 ```
 
 _See code: [src/commands/build/index.ts](https://github.com/nodeshift/paicku/blob/v0.0.7/src/commands/build/index.ts)_

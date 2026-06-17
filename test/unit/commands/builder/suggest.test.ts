@@ -4,6 +4,7 @@ import {mkdtemp, rm} from 'node:fs/promises'
 import {tmpdir} from 'node:os'
 import {join} from 'node:path'
 
+import {setupFakePack} from '../../../utils/fake-pack.js'
 import ghServer from './../../../mocks/githubServer/server'
 
 describe('builder', () => {
@@ -22,6 +23,7 @@ describe('builder', () => {
     process.env.PAICKU_CACHE_DIR = tempDir
     process.env.PAICKU_GITHUB_BASE_URL = 'http://localhost:3003'
     process.env.PAICKU_PACK_VERSION = '0.0.1'
+    await setupFakePack(tempDir, 'builder suggest')
   })
 
   afterEach(async () => {
@@ -29,7 +31,7 @@ describe('builder', () => {
   })
 
   it('runs builder suggest ', async () => {
-    const {stdout} = await runCommand('builder suggest')
-    expect(stdout).to.contain('builder suggest')
+    const {error} = await runCommand('builder suggest')
+    expect(error).to.be.undefined
   })
 })

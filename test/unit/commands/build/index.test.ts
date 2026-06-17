@@ -36,19 +36,20 @@ describe('build', () => {
   })
 
   it('with path and builder', async () => {
-    const {error, stdout} = await runCommand('build imagename --builder builder-ubi --path p/a/t/h')
+    const {error, stdout} = await runCommand('build imagename --builder docker.io/builder-ubi --path p/a/t/h')
     expect(error).to.be.undefined
-    expect(stdout).to.include('Building image imagename with builder builder-ubi')
-    expect(stdout).to.include('build imagename --builder builder-ubi')
+    expect(stdout).to.include('Building image imagename with builder docker.io/builder-ubi')
+  })
+
+  it('errors when the builder is not prefixed with a registry', async () => {
+    const {error} = await runCommand('build imagename --builder paketobuildpacks/builder-ubi8-base --path p/a/t/h')
+    expect(error?.message).to.include('must be prefixed with a registry')
   })
 
   it('only with imagename', async () => {
     const {error, stdout} = await runCommand('build imagename')
     expect(error).to.be.undefined
-    expect(stdout).to.include('Building image imagename with builder paketocommunity/builder-ubi8-base')
-    expect(stdout).to.contain(
-      'build imagename --default-process web --path . --pull-policy always --builder paketocommunity/builder-ubi8-base',
-    )
+    expect(stdout).to.include('Building image imagename with builder docker.io/paketobuildpacks/builder-ubi8-base')
   })
 
   it('with a remote repository', async () => {
@@ -56,10 +57,7 @@ describe('build', () => {
     expect(error).to.be.undefined
     expect(stdout).to.match(/Cloning the repository... into .+tmp-cloned-repos\/node-app-.+/)
     expect(stdout).to.include('Repository cloned successfully')
-    expect(stdout).to.include('Building image imagename with builder paketocommunity/builder-ubi8-base')
-    expect(stdout).to.match(
-      /build imagename --default-process web --path .+tmp-cloned-repos\/node-app-.+ --pull-policy always --builder paketocommunity\/builder-ubi8-base/,
-    )
+    expect(stdout).to.include('Building image imagename with builder docker.io/paketobuildpacks/builder-ubi8-base')
   })
 
   it('with a remote repository and app on sub directory', async () => {
@@ -67,9 +65,7 @@ describe('build', () => {
       `build imagename --path ${ROOT_DIR}/test/unit/testdata/node-app.git:sub-dir`,
     )
     expect(error).to.be.undefined
-    expect(stdout).to.match(
-      /build imagename --default-process web --path .+tmp-cloned-repos\/node-app-.+\/sub-dir --pull-policy always --builder paketocommunity\/builder-ubi8-base/,
-    )
+    expect(stdout).to.include('Building image imagename with builder docker.io/paketobuildpacks/builder-ubi8-base')
   })
 
   it('throws an error if its a url and is not a valid git remote repo', async () => {

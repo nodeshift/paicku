@@ -11,7 +11,7 @@ Show information about a built app image
 
 ```
 USAGE
-  $ paicku inspect IMAGENAME [--forceColor] [--noColor] [-q] [--timestamps] [-v] [--bom] [-h] [-o
+  $ paicku inspect IMAGENAME [--force-color] [--no-color] [-q] [--timestamps] [-v] [--bom] [-h] [-o
     json|yaml|toml|human-readable]
 
 ARGUMENTS
@@ -24,11 +24,11 @@ FLAGS
       --bom              print bill of materials
 
 GLOBAL FLAGS
-  -q, --quiet       Show less output
-  -v, --verbose     Show more output
-      --forceColor  Force color output
-      --noColor     Disable color output
-      --timestamps  Enable timestamps in output
+  -q, --quiet        Show less output
+  -v, --verbose      Show more output
+      --force-color  Force color output
+      --no-color     Disable color output
+      --timestamps   Enable timestamps in output
 
 DESCRIPTION
   Show information about a built app image
