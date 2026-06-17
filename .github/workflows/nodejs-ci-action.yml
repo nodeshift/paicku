@@ -5,6 +5,11 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+    paths-ignore:
+      - 'docs/**'
+      - '**.md'
+      - '.vscode/**'
+
   workflow_dispatch:
 
 jobs:
@@ -22,6 +27,7 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
       - run: npm install
+      - run: npm run lint
       - run: npm test
       - run: npm run test:report
       - name: Coveralls Parallel

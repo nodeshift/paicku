@@ -1,4 +1,4 @@
-name: Weekly Builder Image Mirror
+name: Mirror Images
 
 on:
     schedule:

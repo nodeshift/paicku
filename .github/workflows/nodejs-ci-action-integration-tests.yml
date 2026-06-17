@@ -3,6 +3,10 @@ on:
   pull_request:
     branches:
       - main
+    paths-ignore:
+      - 'docs/**'
+      - '**.md'
+      - '.vscode/**'
   workflow_dispatch:
 
 env:
@@ -43,9 +47,9 @@ jobs:
             runtime: "docker"
             label: "U24-D-RL"
 
-          - runner: "ubuntu-26.04"
-            runtime: "docker"
-            label: "U26-D-RL"
+          # - runner: "ubuntu-26.04"
+          #   runtime: "docker"
+          #   label: "U26-D-RL"
 
           # - runner: "macos-13"
           #   runtime: "docker"
@@ -136,7 +140,7 @@ jobs:
           sudo ls -al /run/podman | grep podman.sock
 
       - name: Docker Ubuntu
-        if: (matrix.combos.runner == 'ubuntu-24.04' ||  matrix.combos.runner == 'ubuntu-22.04' ||  matrix.combos.runner == 'ubuntu-latest')  && matrix.combos.runtime == 'docker'
+        if: (matrix.combos.runner == 'ubuntu-24.04' || matrix.combos.runner == 'ubuntu-22.04' || matrix.combos.runner == 'ubuntu-26.04' || matrix.combos.runner == 'ubuntu-latest') && matrix.combos.runtime == 'docker'
         run: |
           echo "Configuring Docker for ubuntu" 
           # Remove the podman, to allow library autodetect to find docker
@@ -173,7 +177,7 @@ jobs:
         if: matrix.combos.runtime == 'podman5'
         run: echo "${{ secrets.GITHUB_TOKEN }}" | podman login ghcr.io -u ${{ github.actor }} --password-stdin
 
-      - name: Pre-download builder image
+      - name: Download builder image
         run: |
           if [ "${{ matrix.combos.runtime }}" = "docker" ]; then
             RUNTIME=docker
