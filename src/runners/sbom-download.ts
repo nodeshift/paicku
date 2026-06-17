@@ -25,9 +25,9 @@ type SbomDownloadRunnerOptions = {
 
 export async function runSbomDownload(
   imageName: string,
+  options: SbomDownloadOptions,
   executablePath: string,
   runnerOptions: SbomDownloadRunnerOptions,
-  options: SbomDownloadOptions = {},
 ): Promise<SbomDownloadResult> {
   const {console, cwd, env: runnerEnv, logs = {error: [], log: [], warn: []}} = runnerOptions
   const {env: processEnv} = process

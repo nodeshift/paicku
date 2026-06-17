@@ -18,6 +18,13 @@ export default class Inspect extends Command {
   public async run(): Promise<void> {
     const {args, flags} = await this.parse(Inspect)
 
-    await runInspect(args.imageName, flags, path.join(this.config.cacheDir, 'pack'))
+    await runInspect(args.imageName, flags, path.join(this.config.cacheDir, 'pack'), {
+      console: {
+        error: this.error.bind(this),
+        log: this.log.bind(this),
+        logToStderr: this.logToStderr.bind(this),
+        warn: this.warn.bind(this),
+      },
+    })
   }
 }

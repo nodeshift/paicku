@@ -102,9 +102,9 @@ export function createPaicku(options: PaickuOptions = {}): PaickuClient {
         const console = createRunnerConsole(logs)
         return runSbomDownload(
           imageName,
+          {...sbomOptions, 'no-color': true},
           resolvedExecutablePath,
           {console, cwd: options.cwd, env: options.env, logs},
-          {...sbomOptions, 'no-color': true},
         )
       },
     },

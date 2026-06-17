@@ -662,22 +662,17 @@ Note: You must rebuild every time you make changes to the source code.
 
 ### Testing
 
-Run All Tests
+Run only the unit Tests
 
 ```sh
 npm run test
 ```
 
-Run Unit Tests Only
-
-```sh
-npm run unit:test
-```
-
 Run Integration Tests Only
 
 ```sh
-npm run integration:test
+npm run integration:test:podman
+npm run integration:test:docker
 ```
 
 Run Tests in Debug Mode
@@ -688,16 +683,10 @@ For unit tests (useful for `.only` or extended execution time):
 npm run unit:test:debug
 ```
 
-For integration tests:
-
-```sh
-npm run integration:test:debug
-```
-
 Test Coverage
 
 Run tests with coverage:
 
 ```sh
-npm run test:coverage
+npm run test:report
 ```

@@ -18,6 +18,13 @@ export default class BuilderSuggest extends Command {
   public async run(): Promise<void> {
     const {flags} = await this.parse(BuilderSuggest)
 
-    await runBuilderSuggest(flags, path.join(this.config.cacheDir, 'pack'))
+    await runBuilderSuggest(flags, path.join(this.config.cacheDir, 'pack'), {
+      console: {
+        error: this.error.bind(this),
+        log: this.log.bind(this),
+        logToStderr: this.logToStderr.bind(this),
+        warn: this.warn.bind(this),
+      },
+    })
   }
 }

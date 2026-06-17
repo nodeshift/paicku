@@ -2,6 +2,7 @@ import {Flags} from '@oclif/core'
 
 export const globalFlags = {
   'force-color': Flags.boolean({
+    default: true,
     description: 'Force color output',
     helpGroup: 'GLOBAL',
   }),

@@ -306,6 +306,14 @@ export async function configureContainerRuntime(
   console.error(`Building apps with paicku on ${target.platform} ${target.arch} is not yet supported`)
 }
 
+function isPodmanRootless(): boolean {
+  return (
+    execFileSync('podman', ['info', '--format="{{.Host.Security.Rootless}}"'], {
+      encoding: 'utf8',
+    }).trim() === 'true'
+  )
+}
+
 function configurePodmanOnLinuxAmd64(): {envs: Envs; envsForRun: EnvsForRun; flags: string[]} {
   const podmandInfo = execFileSync('podman', ['info', '-f', '{{.Host.RemoteSocket.Path}}'], {
     encoding: 'utf8',
@@ -313,9 +321,15 @@ function configurePodmanOnLinuxAmd64(): {envs: Envs; envsForRun: EnvsForRun; fla
 
   execFileSync('systemctl', ['--user', 'start', 'podman.socket'], {encoding: 'utf8'})
 
+  const dockerHost = `unix://${podmandInfo.trim()}`
+  const envsForRun: EnvsForRun = {
+    DOCKER_HOST: dockerHost,
+    ...(isPodmanRootless() ? {TESTCONTAINERS_RYUK_DISABLED: 'true'} : {TESTCONTAINERS_RYUK_PRIVILEGED: 'true'}),
+  }
+
   return {
-    envs: {DOCKER_HOST: `unix://${podmandInfo.trim()}`},
-    envsForRun: {DOCKER_HOST: `unix://${podmandInfo.trim()}`},
+    envs: {DOCKER_HOST: dockerHost},
+    envsForRun,
     flags: ['--docker-host', 'inherit'],
   }
 }
@@ -354,13 +368,9 @@ async function configurePodmanOnDarwinArm64(
     console.error('Ensure you have installed podman correctly.')
   }
 
-  let isPodmanRootless: boolean
+  let rootless: boolean
   try {
-    const hostSecurityRootless = execFileSync('podman', ['info', '--format="{{.Host.Security.Rootless}}"'], {
-      encoding: 'utf8',
-    })
-
-    isPodmanRootless = hostSecurityRootless.trim() === 'true'
+    rootless = isPodmanRootless()
   } catch {
     console.error('Ensure you have installed podman correctly.')
   }
@@ -480,7 +490,7 @@ async function configurePodmanOnDarwinArm64(
   const envsForRun = {
     DOCKER_HOST: podmanMachineUri.href,
     TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE: '/var/run/docker.sock',
-    ...(isPodmanRootless ? {TESTCONTAINERS_RYUK_DISABLED: 'true'} : {TESTCONTAINERS_RYUK_PRIVILEGED: 'true'}),
+    ...(rootless ? {TESTCONTAINERS_RYUK_DISABLED: 'true'} : {TESTCONTAINERS_RYUK_PRIVILEGED: 'true'}),
   }
 
   return {
