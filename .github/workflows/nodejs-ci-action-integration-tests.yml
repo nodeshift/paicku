@@ -1,11 +1,13 @@
-name: tests
+name: Node.js CI integration tests
 on:
-  push:
-    branches-ignore: [main]
+  pull_request:
+    branches:
+    - main
   workflow_dispatch:
 
 jobs:
   integration-tests:
+    name: Node.js CI integration tests
     strategy:
       fail-fast: false
       matrix:
@@ -22,7 +24,6 @@ jobs:
             # {runner: 'macos-13', runtime: 'podman5', root: 'rootful', label: 'M13-P5-RF'},
 
     runs-on: [ "${{ matrix.combos.runner }}" ]
-    name: ${{ matrix.combos.label }}
 
     steps:
       # Install and configure podman for mac
