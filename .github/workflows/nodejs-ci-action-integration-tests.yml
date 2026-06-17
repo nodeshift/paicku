@@ -5,6 +5,14 @@ on:
       - main
   workflow_dispatch:
 
+env:
+  SOURCE_BUILDER_IMAGE: docker.io/paketobuildpacks/builder-jammy-base
+  GHCR_BUILDER_IMAGE: ghcr.io/${{ github.repository }}/builder-jammy-base:latest
+
+permissions:
+  contents: read
+  packages: read
+
 jobs:
   integration-tests:
     strategy:
@@ -153,6 +161,28 @@ jobs:
           cache: npm
       - run: npm install
       - run: npm run build
+      - name: Log in to GHCR (docker)
+        if: matrix.combos.runtime == 'docker'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Log in to GHCR (podman)
+        if: matrix.combos.runtime == 'podman5'
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | podman login ghcr.io -u ${{ github.actor }} --password-stdin
+
+      - name: Pre-download builder image
+        run: |
+          if [ "${{ matrix.combos.runtime }}" = "docker" ]; then
+            RUNTIME=docker
+          else
+            RUNTIME=podman
+          fi
+
+          $RUNTIME pull "${{ env.GHCR_BUILDER_IMAGE }}"
+          $RUNTIME tag "${{ env.GHCR_BUILDER_IMAGE }}" "${{ env.SOURCE_BUILDER_IMAGE }}"
       - name: Run integration tests
         run: |
           if [ "${{ matrix.combos.runtime }}" = "docker" ]; then
@@ -164,13 +194,14 @@ jobs:
   integration-tests-status:
     name: All integration tests passed
     runs-on: ubuntu-latest
-    needs: integration-tests
+    needs: [integration-tests]
     if: always()
     steps:
       - name: Check matrix job status
         if: ${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') }}
         run: |
-          echo "One or more matrix jobs failed or were cancelled."
+          echo "One or more jobs failed or were cancelled."
+          echo "integration-tests: ${{ needs.integration-tests.result }}"
           exit 1
       - name: Success
         run: echo "All matrix jobs passed!"

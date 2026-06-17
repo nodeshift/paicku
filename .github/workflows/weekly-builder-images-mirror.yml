@@ -1,0 +1,37 @@
+name: Weekly Builder Image Mirror
+
+on:
+    schedule:
+        - cron: "0 0 * * 0"
+    workflow_dispatch:
+
+env:
+    SOURCE_BUILDER_IMAGE: docker.io/paketobuildpacks/builder-jammy-base
+    GHCR_BUILDER_IMAGE: ghcr.io/${{ github.repository }}/builder-jammy-base:latest
+
+permissions:
+    contents: read
+    packages: write
+
+jobs:
+    mirror-image:
+        name: Sync Image to GHCR
+        runs-on: ubuntu-latest
+        steps:
+            - name: Log in to GHCR
+              uses: docker/login-action@v3
+              with:
+                  registry: ghcr.io
+                  username: ${{ github.actor }}
+                  password: ${{ secrets.GITHUB_TOKEN }}
+
+            - name: Pull, Tag, and Push Image
+              run: |
+                  echo "Pulling latest image from upstream Docker Hub..."
+                  docker pull "${{ env.SOURCE_BUILDER_IMAGE }}"
+
+                  echo "Tagging image for GHCR..."
+                  docker tag "${{ env.SOURCE_BUILDER_IMAGE }}" "${{ env.GHCR_BUILDER_IMAGE }}"
+
+                  echo "Pushing updated image to GHCR..."
+                  docker push "${{ env.GHCR_BUILDER_IMAGE }}"
