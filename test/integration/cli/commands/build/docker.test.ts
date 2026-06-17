@@ -24,6 +24,7 @@ describe('build (docker)', () => {
       testdataPath,
       '--container-runtime',
       'docker',
+      '--no-color',
     ].join(' ')
 
     const {error, stdout} = await runCommand(flargs)

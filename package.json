@@ -23,7 +23,7 @@
     "@types/adm-zip": "^0.5.7",
     "@types/chai": "^4",
     "@types/mocha": "^10",
-    "@types/node": "^18",
+    "@types/node": "^22.19.21",
     "c8": "^11.0.0",
     "chai": "^4",
     "eslint": "^8",
@@ -38,6 +38,9 @@
   },
   "engines": {
     "node": ">=20"
+  },
+  "overrides": {
+    "yargs": ">=17.7.2 && <19"
   },
   "files": [
     "/bin",

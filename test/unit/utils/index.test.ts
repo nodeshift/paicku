@@ -118,6 +118,10 @@ describe('utils', () => {
         got: {env: ['VAR1=value1', 'VAR2=value2']},
         want: ['--env', 'VAR1=value1', '--env', 'VAR2=value2'],
       },
+      {
+        got: {'force-color': true, 'no-color': true},
+        want: ['--no-color'],
+      },
     ]
 
     for (const test of tests) {

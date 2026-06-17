@@ -1,0 +1,77 @@
+---
+name: Update Pack
+
+on:
+    schedule:
+        - cron: "42 19 * * *" # daily at 19:42 UTC
+    workflow_dispatch: {}
+
+concurrency: pack_update
+
+jobs:
+    update:
+        name: Update
+        runs-on: ubuntu-24.04
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v6
+
+            - name: Checkout Branch
+              uses: paketo-buildpacks/github-config/actions/pull-request/checkout-branch@main
+              with:
+                  branch: automation/pack/update
+
+            - name: Fetch Latest pack
+              id: latest-pack
+              run: |
+                version=$(curl -fsSL https://api.github.com/repos/buildpacks/pack/releases/latest | jq -r .tag_name)
+                echo "version=${version}" >> "$GITHUB_OUTPUT"
+
+            - name: Update pack version in tools.json
+              env:
+                  PACK_VERSION: ${{ steps.latest-pack.outputs.version }}
+              run: |
+                  jq --null-input \
+                     --sort-keys \
+                     --arg pack "${PACK_VERSION}" \
+                     '{ pack: $pack }' > ./tools.json
+
+            - name: Commit
+              id: commit
+              uses: paketo-buildpacks/github-config/actions/pull-request/create-commit@main
+              with:
+                  message: "Updating pack"
+                  pathspec: "."
+
+            - name: Push Branch
+              if: ${{ steps.commit.outputs.commit_sha != '' }}
+              uses: paketo-buildpacks/github-config/actions/pull-request/push-branch@main
+              with:
+                  branch: automation/pack/update
+
+            - name: Open Pull Request
+              if: ${{ steps.commit.outputs.commit_sha != '' }}
+              uses: paketo-buildpacks/github-config/actions/pull-request/open@main
+              with:
+                  token: ${{ secrets.PAICKU_BOT_GITHUB_TOKEN }}
+                  title: "Updates pack"
+                  branch: automation/pack/update
+
+    failure:
+        name: Alert on Failure
+        runs-on: ubuntu-24.04
+        needs: [update]
+        if: ${{ always() && needs.update.result == 'failure' }}
+        steps:
+            - name: File Failure Alert Issue
+              uses: paketo-buildpacks/github-config/actions/issue/file@main
+              with:
+                  token: ${{ secrets.GITHUB_TOKEN }}
+                  repo: ${{ github.repository }}
+                  label: "failure:update-pack"
+                  comment_if_exists: true
+                  issue_title: "Failure: Update Pack workflow"
+                  issue_body: |
+                      Update Pack workflow [failed](https://github.com/${{github.repository}}/actions/runs/${{github.run_id}}).
+                  comment_body: |
+                      Another failure occurred: https://github.com/${{github.repository}}/actions/runs/${{github.run_id}}

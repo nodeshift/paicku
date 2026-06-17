@@ -88,8 +88,13 @@ export function hasRegistryPrefix(builder: string): boolean {
 export function parseFlags(flags: Flags): string[] {
   // iterate over the flags and add them to an array
   const flagsArray: string[] = []
+  const resolvedFlags = {...flags}
 
-  for (const [key, value] of Object.entries(flags)) {
+  if (resolvedFlags['no-color']) {
+    delete resolvedFlags['force-color']
+  }
+
+  for (const [key, value] of Object.entries(resolvedFlags)) {
     if (typeof value === 'boolean') {
       if (value) {
         flagsArray.push(`--${key}`)
