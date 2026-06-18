@@ -32,5 +32,9 @@ describe('build (podman)', () => {
 
     const inspect = await execa('podman', ['image', 'inspect', imageName], {reject: false})
     expect(inspect.exitCode).to.equal(0)
+
+    const {error: inspectError, stdout: inspectStdout} = await runCommand(`inspect ${imageName} --no-color`)
+    expect(inspectError).to.be.undefined
+    expect(inspectStdout).to.contain(imageName)
   })
 })

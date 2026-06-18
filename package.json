@@ -90,8 +90,8 @@
     "test:report": "c8 report --reporter=lcovonly && c8 report --reporter=text-summary",
     "unit:test": "mocha --forbid-only \"test/unit/**/*.test.ts\"",
     "unit:test:debug": "mocha --timeout 0 \"test/unit/**/*.test.ts\"",
-    "integration:test:docker": "mocha --forbid-only \"test/integration/**/docker.test.ts\"",
-    "integration:test:podman": "mocha --forbid-only \"test/integration/**/podman.test.ts\"",
+    "integration:test:docker": "mocha --forbid-only \"test/integration/**/{*docker,*common}.test.ts\"",
+    "integration:test:podman": "mocha --forbid-only \"test/integration/**/{*podman,*common}.test.ts\"",
     "version": "oclif readme && git add README.md"
   },
   "main": "dist/index.js",
