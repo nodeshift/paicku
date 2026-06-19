@@ -47,9 +47,9 @@ jobs:
             runtime: "docker"
             label: "U24-D-RL"
 
-          - runner: "ubuntu-26.04"
-            runtime: "docker"
-            label: "U26-D-RL"
+          # - runner: "ubuntu-26.04"
+          #   runtime: "docker"
+          #   label: "U26-D-RL"
 
           # - runner: "macos-13"
           #   runtime: "docker"
