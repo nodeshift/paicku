@@ -101,7 +101,7 @@ export async function runInspect(
 
   await Parser.parse(argvs, {args: inspectArgs, flags: inspectFlags})
 
-  const packArgs = ['inspect', ...argvs, ...packConfiguration.flags]
+  const packArgs = ['inspect', ...argvs]
 
   const execOptions = {
     cwd,

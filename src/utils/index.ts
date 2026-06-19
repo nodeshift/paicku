@@ -374,13 +374,6 @@ async function configurePodmanOnDarwinArm64(
     console.error('Ensure you have installed podman correctly.')
   }
 
-  let rootless: boolean
-  try {
-    rootless = isPodmanRootless()
-  } catch {
-    console.error('Ensure you have installed podman correctly.')
-  }
-
   try {
     execFileSync('podman', ['container', 'ls'], {
       encoding: 'utf8',
@@ -493,8 +486,19 @@ async function configurePodmanOnDarwinArm64(
     }
   }
 
+  const lifecycleDockerHost = `unix://${podmanMachineUri.pathname}`
+
+  const testcontainersDockerHost = `unix://${execFileSync('podman', ['machine', 'inspect', '--format', '{{.ConnectionInfo.PodmanSocket.Path}}'], {encoding: 'utf8'}).trim()}`
+
+  let rootless: boolean
+  try {
+    rootless = isPodmanRootless()
+  } catch {
+    console.error('Ensure you have installed podman correctly.')
+  }
+
   const envsForRun = {
-    DOCKER_HOST: podmanMachineUri.href,
+    DOCKER_HOST: testcontainersDockerHost,
     TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE: '/var/run/docker.sock',
     ...(rootless ? {TESTCONTAINERS_RYUK_DISABLED: 'true'} : {TESTCONTAINERS_RYUK_PRIVILEGED: 'true'}),
   }
@@ -502,6 +506,6 @@ async function configurePodmanOnDarwinArm64(
   return {
     envs: {DOCKER_HOST: podmanMachineUri.href},
     envsForRun,
-    flags: ['--docker-host', 'inherit'],
+    flags: ['--docker-host', lifecycleDockerHost],
   }
 }
