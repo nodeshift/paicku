@@ -53,7 +53,7 @@ jobs:
               if: ${{ steps.commit.outputs.commit_sha != '' }}
               uses: paketo-buildpacks/github-config/actions/pull-request/open@main
               with:
-                  token: ${{ secrets.PAICKU_BOT_GITHUB_TOKEN }}
+                  token: ${{ secrets.GITHUB_TOKEN }}
                   title: "Updates pack"
                   branch: automation/pack/update
 

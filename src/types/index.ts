@@ -31,6 +31,15 @@ export type RunnerConsole = {
   warn: (message: string) => void
 }
 
+export type Confirm = (options: {default?: boolean; message: string}) => Promise<boolean>
+
+export const throwOnConfirm: Confirm = async ({message}) => {
+  throw new Error(
+    `paicku needs a confirmation that cannot be answered in non-interactive mode: "${message}". ` +
+      `Run paicku interactively to answer it, or complete the required setup manually before retrying.`,
+  )
+}
+
 export function createRunnerConsole(logs: RunnerLogs): RunnerConsole {
   return {
     error(message: string): never {

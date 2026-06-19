@@ -1,4 +1,3 @@
-import {confirm} from '@inquirer/prompts'
 import {lookpath} from 'lookpath'
 import {execFileSync, spawn} from 'node:child_process'
 import {existsSync, lstatSync, mkdirSync, mkdtempSync} from 'node:fs'
@@ -6,7 +5,7 @@ import path, {join} from 'node:path'
 import url from 'node:url'
 
 import {CLONED_REPOS_TMP_DIRNAME} from '../constants/index.js'
-import {Envs, EnvsForRun, Flags, RunnerConsole} from '../types/index.js'
+import {Confirm, Envs, EnvsForRun, Flags, RunnerConsole} from '../types/index.js'
 
 export function getPackUrl(platform: string, arch: string, packVersion: string) {
   const packNamingConvention = getPackNamingConvention(arch, platform)
@@ -271,14 +270,15 @@ export async function configureContainerRuntime(
   containerRuntime: string,
   target: {arch: string; platform: string},
   console: RunnerConsole,
+  confirm: Confirm,
 ): Promise<{envs: Envs; envsForRun: EnvsForRun; flags: string[]}> {
   if (containerRuntime === 'podman' && target.platform === 'darwin' && target.arch === 'arm64') {
-    return configurePodmanOnDarwinArm64(console)
+    return configurePodmanOnDarwinArm64(console, confirm)
   }
 
   if (containerRuntime === 'podman' && target.platform === 'darwin' && target.arch === 'x64') {
     // We use the same configuration for both darwin arm64 and x64
-    return configurePodmanOnDarwinArm64(console)
+    return configurePodmanOnDarwinArm64(console, confirm)
   }
 
   if (containerRuntime === 'docker' && target.platform === 'darwin' && target.arch === 'arm64') {
@@ -350,6 +350,7 @@ function configureDockerOnDarwinArm64(): {envs: Envs; envsForRun: EnvsForRun; fl
 // eslint-disable-next-line complexity
 async function configurePodmanOnDarwinArm64(
   console: RunnerConsole,
+  confirm: Confirm,
 ): Promise<{envs: Envs; envsForRun: EnvsForRun; flags: string[]}> {
   let listPodmanConnections
   try {
@@ -369,13 +370,6 @@ async function configurePodmanOnDarwinArm64(
     if (!listPodmanConnections) {
       console.error('Ensure you have installed podman correctly.')
     }
-  } catch {
-    console.error('Ensure you have installed podman correctly.')
-  }
-
-  let rootless: boolean
-  try {
-    rootless = isPodmanRootless()
   } catch {
     console.error('Ensure you have installed podman correctly.')
   }
@@ -492,8 +486,19 @@ async function configurePodmanOnDarwinArm64(
     }
   }
 
+  const lifecycleDockerHost = `unix://${podmanMachineUri.pathname}`
+
+  const testcontainersDockerHost = `unix://${execFileSync('podman', ['machine', 'inspect', '--format', '{{.ConnectionInfo.PodmanSocket.Path}}'], {encoding: 'utf8'}).trim()}`
+
+  let rootless: boolean
+  try {
+    rootless = isPodmanRootless()
+  } catch {
+    console.error('Ensure you have installed podman correctly.')
+  }
+
   const envsForRun = {
-    DOCKER_HOST: podmanMachineUri.href,
+    DOCKER_HOST: testcontainersDockerHost,
     TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE: '/var/run/docker.sock',
     ...(rootless ? {TESTCONTAINERS_RYUK_DISABLED: 'true'} : {TESTCONTAINERS_RYUK_PRIVILEGED: 'true'}),
   }
@@ -501,6 +506,6 @@ async function configurePodmanOnDarwinArm64(
   return {
     envs: {DOCKER_HOST: podmanMachineUri.href},
     envsForRun,
-    flags: ['--docker-host', 'inherit'],
+    flags: ['--docker-host', lifecycleDockerHost],
   }
 }

@@ -5,7 +5,7 @@ import path from 'node:path'
 
 import {CONTAINER_RUNTIMES_IN_PRIORITY, DEFAULT_BUILDER_IMAGE} from '../constants/index.js'
 import {buildFlags} from '../flargs/build.js'
-import {EnvsForRun, RunnerConsole, RunnerLogs} from '../types/index.js'
+import {Confirm, EnvsForRun, RunnerConsole, RunnerLogs} from '../types/index.js'
 import {
   cloneRepo,
   configureContainerRuntime,
@@ -33,6 +33,7 @@ export interface BuildResult {
 }
 
 type BuildRunnerOptions = {
+  confirm: Confirm
   console: RunnerConsole
   cwd?: string
   env?: Record<string, string | undefined>
@@ -45,7 +46,7 @@ export async function runBuild(
   executablePath: string,
   runnerOptions: BuildRunnerOptions,
 ): Promise<BuildResult> {
-  const {console, cwd, env: runnerEnv, logs = {error: [], log: [], warn: []}} = runnerOptions
+  const {confirm, console, cwd, env: runnerEnv, logs = {error: [], log: [], warn: []}} = runnerOptions
 
   const arch = os.arch()
   const {env: processEnv, platform} = process
@@ -87,6 +88,7 @@ export async function runBuild(
       platform,
     },
     console,
+    confirm,
   )
 
   const {envs, envsForRun} = packConfiguration

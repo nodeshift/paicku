@@ -25,6 +25,10 @@ describe('programmatic API build (docker)', () => {
     expect(result.failed).to.be.false
     expect(result.stdout.join('\n')).to.contain(`Successfully built image '${imageName}'`)
 
+    const inspectResult = await paicku.inspect(result.imageName, {output: 'json'})
+    expect(inspectResult.failed).to.be.false
+    expect(inspectResult.parsedStdout).to.not.be.null
+
     let started
     try {
       started = await paicku.start({

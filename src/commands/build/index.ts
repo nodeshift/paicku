@@ -1,8 +1,12 @@
+import {confirm} from '@inquirer/prompts'
 import {Command} from '@oclif/core'
 import path from 'node:path'
 
 import {buildArgs, buildFlags} from '../../flargs/build.js'
 import {runBuild} from '../../runners/build.js'
+import {Confirm} from '../../types/index.js'
+
+const interactiveConfirm: Confirm = (options) => confirm(options)
 
 export default class Build extends Command {
   static override readonly args = buildArgs
@@ -36,6 +40,7 @@ export default class Build extends Command {
     const {args, flags} = await this.parse(Build)
 
     await runBuild(args.imageName, flags, path.join(this.config.cacheDir, 'pack'), {
+      confirm: interactiveConfirm,
       console: {
         error: this.error.bind(this),
         log: this.log.bind(this),
