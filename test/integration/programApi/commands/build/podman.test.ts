@@ -25,7 +25,7 @@ describe('programmatic API build (podman)', () => {
     expect(failed).to.be.false
     expect(stdout.join('\n')).to.contain(`Successfully built image '${imageName}'`)
 
-    const inspectResult = await paicku.inspect(imageName, {output: 'json'})
+    const inspectResult = await paicku.inspect(imageName, {'container-runtime': 'podman', output: 'json'})
     expect(inspectResult.failed).to.be.false
     expect(inspectResult.parsedStdout).to.not.be.null
 

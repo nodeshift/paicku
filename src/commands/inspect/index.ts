@@ -1,8 +1,12 @@
+import {confirm} from '@inquirer/prompts'
 import {Command} from '@oclif/core'
 import path from 'node:path'
 
 import {inspectArgs, inspectFlags} from '../../flargs/inspect.js'
 import {runInspect} from '../../runners/inspect.js'
+import {Confirm} from '../../types/index.js'
+
+const interactiveConfirm: Confirm = (options) => confirm(options)
 
 export default class Inspect extends Command {
   static readonly aliases = ['inspect', 'inspect-image']
@@ -19,6 +23,7 @@ export default class Inspect extends Command {
     const {args, flags} = await this.parse(Inspect)
 
     await runInspect(args.imageName, flags, path.join(this.config.cacheDir, 'pack'), {
+      confirm: interactiveConfirm,
       console: {
         error: this.error.bind(this),
         log: this.log.bind(this),

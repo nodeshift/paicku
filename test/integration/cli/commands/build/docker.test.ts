@@ -1,5 +1,5 @@
 import {runCommand} from '@oclif/test'
-import {config,expect} from 'chai'
+import {config, expect} from 'chai'
 import {execa} from 'execa'
 import {it} from 'mocha'
 import path from 'node:path'
@@ -37,5 +37,7 @@ describe('build (docker)', () => {
     const {error: inspectError, stdout: inspectStdout} = await runCommand(`inspect ${imageName} --no-color`)
     expect(inspectError).to.be.undefined
     expect(inspectStdout).to.contain(imageName)
+
+    await execa('docker', ['rmi', imageName], {reject: false})
   })
 })

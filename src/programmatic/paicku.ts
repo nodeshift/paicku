@@ -90,6 +90,7 @@ export function createPaicku(options: PaickuOptions = {}): PaickuClient {
       const logs: RunnerLogs = {error: [], log: [], warn: []}
       const console = createRunnerConsole(logs)
       return runInspect(imageName, {...inspectOptions, 'no-color': true}, resolvedExecutablePath, {
+        confirm: throwOnConfirm,
         console,
         cwd: options.cwd,
         env: options.env,

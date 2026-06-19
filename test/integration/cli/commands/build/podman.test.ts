@@ -14,27 +14,32 @@ describe('build (podman)', () => {
     const imageName = `${crypto.randomUUID()}`
 
     const testdataPath = path.join(TEST_DIR, 'testdata/nodejs_simple_app')
-    const flargs = [
-      'build',
-      imageName,
-      '--builder',
-      'docker.io/paketobuildpacks/builder-jammy-base',
-      '--path',
-      testdataPath,
-      '--container-runtime',
-      'podman',
-      '--no-color',
-    ].join(' ')
 
-    const {error, stdout} = await runCommand(flargs)
+    const {error, stdout} = await runCommand(
+      [
+        'build',
+        imageName,
+        '--builder',
+        'docker.io/paketobuildpacks/builder-jammy-base',
+        '--path',
+        testdataPath,
+        '--container-runtime',
+        'podman',
+        '--no-color',
+      ].join(' '),
+    )
     expect(error).to.be.undefined
     expect(stdout).to.contain(`Successfully built image '${imageName}'`)
 
     const inspect = await execa('podman', ['image', 'inspect', imageName], {reject: false})
     expect(inspect.exitCode).to.equal(0)
 
-    const {error: inspectError, stdout: inspectStdout} = await runCommand(`inspect ${imageName} --no-color`)
+    const {error: inspectError, stdout: inspectStdout} = await runCommand(
+      ['inspect', imageName, '--no-color', '--container-runtime', 'podman'].join(' '),
+    )
     expect(inspectError).to.be.undefined
     expect(inspectStdout).to.contain(imageName)
+
+    await execa('podman', ['rmi', imageName], {reject: false})
   })
 })
