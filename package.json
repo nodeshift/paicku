@@ -37,7 +37,7 @@
     "typescript": "^5"
   },
   "engines": {
-    "node": ">=20"
+    "node": "^22 || ^24 || ^26"
   },
   "overrides": {
     "yargs": ">=17.7.2 && <19"
