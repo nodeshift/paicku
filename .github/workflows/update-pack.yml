@@ -25,6 +25,7 @@ jobs:
               id: latest-pack
               run: |
                 version=$(curl -fsSL https://api.github.com/repos/buildpacks/pack/releases/latest | jq -r .tag_name)
+                version="${version#v}"
                 echo "version=${version}" >> "$GITHUB_OUTPUT"
 
             - name: Update pack version in tools.json
