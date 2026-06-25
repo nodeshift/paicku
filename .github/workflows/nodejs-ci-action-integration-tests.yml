@@ -172,8 +172,14 @@ jobs:
             RUNTIME=podman
           fi
 
-          $RUNTIME pull "${{ env.GHCR_BUILDER_IMAGE }}"
-          $RUNTIME tag "${{ env.GHCR_BUILDER_IMAGE }}" "${{ env.SOURCE_BUILDER_IMAGE }}"
+          echo "Attempting to pull from GHCR..."
+          if $RUNTIME pull "${{ env.GHCR_BUILDER_IMAGE }}"; then
+            echo "Successfully pulled from GHCR. Tagging image..."
+            $RUNTIME tag "${{ env.GHCR_BUILDER_IMAGE }}" "${{ env.SOURCE_BUILDER_IMAGE }}"
+          else
+            echo "Image not found in GHCR (manifest unknown). Falling back to source image..."
+            $RUNTIME pull "${{ env.SOURCE_BUILDER_IMAGE }}"
+          fi
           
       - name: Run integration tests
         run: |
