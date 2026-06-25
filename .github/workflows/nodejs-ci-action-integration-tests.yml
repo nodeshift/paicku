@@ -24,10 +24,10 @@ jobs:
       matrix:
         node_version: [22.x, 24.x, 26.x]
         combos:
-          - runner: "ubuntu-22.04"
-            runtime: "podman5"
-            root: "rootless"
-            label: "U22-P5-RL"
+          # - runner: "ubuntu-22.04"
+          #   runtime: "podman5"
+          #   root: "rootless"
+          #   label: "U22-P5-RL"
 
           - runner: "ubuntu-24.04"
             runtime: "podman5"
@@ -39,9 +39,9 @@ jobs:
           #   root: "rootless"
           #   label: "U26-P5-RL"
 
-          - runner: "ubuntu-22.04"
-            runtime: "docker"
-            label: "U22-D-RL"
+          # - runner: "ubuntu-22.04"
+          #   runtime: "docker"
+          #   label: "U22-D-RL"
 
           - runner: "ubuntu-24.04"
             runtime: "docker"
