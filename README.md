@@ -63,14 +63,9 @@ const result = await paicku.build({
   builder: 'docker.io/paketobuildpacks/builder-ubi8-base',
 })
 
-if (result.failed) {
-  console.error('Build failed:', result.stderr)
-  process.exit(1)
-}
-
 const started = await paicku.start({
-  imageName: buildResult.imageName,
-  envsForRun: buildResult.envsForRun,
+  imageName: result.imageName,
+  envsForRun: result.envsForRun,
   port: 8080,
 })
 

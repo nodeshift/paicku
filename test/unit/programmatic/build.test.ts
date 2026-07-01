@@ -42,7 +42,6 @@ describe('paicku package - build', () => {
       path: '/path/to/app',
     })
 
-    expect(result.failed).to.be.false
     expect(result.stdout.at(-1)?.trim()).to.equal("Successfully built image 'my-image'")
     expect(result.imageName).to.equal('my-image')
     expect(result.command).to.include('build my-image')
@@ -59,7 +58,7 @@ describe('paicku package - build', () => {
     })
 
     expect(result.stdout.some((message) => message.includes('Building image my-image'))).to.be.true
-    expect(result.stderr.some((message) => message.includes('container runtime'))).to.be.true
+    expect(result.warnings.some((message) => message.includes('container runtime'))).to.be.true
   })
 
   it('createPaicku().build collects error logs when builder lacks registry prefix', async () => {
