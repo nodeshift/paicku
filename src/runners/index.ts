@@ -2,5 +2,5 @@ export {type RunnerConsole, type RunnerLogs, createRunnerConsole} from '../types
 export {type BuildOptions, type BuildResult, runBuild} from './build.js'
 export {type BuilderSuggestOptions, type BuilderSuggestResult} from './builder-suggest.js'
 export {type InspectOptions, type InspectResult} from './inspect.js'
+export {type BuiltImageRunOptions, type RunningContainer} from './run.js'
 export {type SbomDownloadOptions, type SbomDownloadResult} from './sbom-download.js'
-export {type StartOptions, type StartResult, runStart} from './start.js'

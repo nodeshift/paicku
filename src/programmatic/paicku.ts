@@ -6,8 +6,8 @@ import {downloadPack} from '../hooks/prerun/download-pack.js'
 import {type BuildResult, runBuild} from '../runners/build.js'
 import {type BuilderSuggestOptions, type BuilderSuggestResult, runBuilderSuggest} from '../runners/builder-suggest.js'
 import {type InspectOptions, type InspectResult, runInspect} from '../runners/inspect.js'
+import {type BuiltImageRunOptions, type RunningContainer, run as runContainer} from '../runners/run.js'
 import {type SbomDownloadOptions, type SbomDownloadResult, runSbomDownload} from '../runners/sbom-download.js'
-import {type StartOptions, type StartResult, runStart} from '../runners/start.js'
 import {type PaickuBuildOptions, type RunnerLogs} from '../types/index.js'
 import {createRunnerConsole, throwOnConfirm} from '../types/index.js'
 
@@ -16,11 +16,14 @@ const __dirname = path.dirname(__filename)
 
 export type PaickuOptions = {
   cwd?: string
-  env?: Record<string, string | undefined>
   executablePath?: string
 }
 
 export type {PaickuBuildOptions} from '../types/index.js'
+
+export interface BuiltImage extends BuildResult {
+  run(options?: BuiltImageRunOptions): Promise<RunningContainer>
+}
 
 export type PaickuBuilderClient = {
   suggest(options?: BuilderSuggestOptions): Promise<BuilderSuggestResult>
@@ -31,11 +34,10 @@ export type PaickuSbomClient = {
 }
 
 export type PaickuClient = {
-  build(options?: PaickuBuildOptions): Promise<BuildResult>
+  build(options?: PaickuBuildOptions): Promise<BuiltImage>
   builder: PaickuBuilderClient
   inspect(imageName: string, options?: InspectOptions): Promise<InspectResult>
   sbom: PaickuSbomClient
-  start(options: StartOptions): Promise<StartResult>
 }
 
 export function createPaicku(options: PaickuOptions = {}): PaickuClient {
@@ -57,19 +59,28 @@ export function createPaicku(options: PaickuOptions = {}): PaickuClient {
   }
 
   return {
-    async build(buildOptions: PaickuBuildOptions = {}): Promise<BuildResult> {
+    async build(buildOptions: PaickuBuildOptions = {}): Promise<BuiltImage> {
       const {imageName, ...flags} = buildOptions
       const {resolvedExecutablePath} = await resolveExecutablePath()
       const logs: RunnerLogs = {error: [], log: [], warn: []}
       const console = createRunnerConsole(logs)
 
-      return runBuild(imageName, {...flags, 'no-color': true}, resolvedExecutablePath, {
+      const rawBuildData = await runBuild(imageName, {...flags, 'no-color': true}, resolvedExecutablePath, {
         confirm: throwOnConfirm,
         console,
         cwd: options.cwd,
-        env: options.env,
         logs,
       })
+
+      return {
+        ...rawBuildData,
+        run: async (runOptions: BuiltImageRunOptions = {}): Promise<RunningContainer> =>
+          runContainer({
+            ...runOptions,
+            envsForRun: rawBuildData.envsForRun,
+            imageName: rawBuildData.imageName,
+          }),
+      }
     },
     builder: {
       async suggest(builderOptions: BuilderSuggestOptions = {}): Promise<BuilderSuggestResult> {
@@ -80,7 +91,6 @@ export function createPaicku(options: PaickuOptions = {}): PaickuClient {
         return runBuilderSuggest({...builderOptions, 'no-color': true}, resolvedExecutablePath, {
           console,
           cwd: options.cwd,
-          env: options.env,
           logs,
         })
       },
@@ -93,7 +103,6 @@ export function createPaicku(options: PaickuOptions = {}): PaickuClient {
         confirm: throwOnConfirm,
         console,
         cwd: options.cwd,
-        env: options.env,
         logs,
       })
     },
@@ -102,18 +111,12 @@ export function createPaicku(options: PaickuOptions = {}): PaickuClient {
         const {resolvedExecutablePath} = await resolveExecutablePath()
         const logs: RunnerLogs = {error: [], log: [], warn: []}
         const console = createRunnerConsole(logs)
-        return runSbomDownload(
-          imageName,
-          {...sbomOptions, 'no-color': true},
-          resolvedExecutablePath,
-          {console, cwd: options.cwd, env: options.env, logs},
-        )
+        return runSbomDownload(imageName, {...sbomOptions, 'no-color': true}, resolvedExecutablePath, {
+          console,
+          cwd: options.cwd,
+          logs,
+        })
       },
-    },
-    async start(startOptions: StartOptions): Promise<StartResult> {
-      return runStart(startOptions, {
-        env: options.env,
-      })
     },
   }
 }

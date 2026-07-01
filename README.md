@@ -63,11 +63,7 @@ const result = await paicku.build({
   builder: 'docker.io/paketobuildpacks/builder-ubi8-base',
 })
 
-const started = await paicku.start({
-  imageName: result.imageName,
-  envsForRun: result.envsForRun,
-  port: 8080,
-})
+const container = await result.run({port: 8080})
 
 console.log(`Container started at ${started.url}`)
 
@@ -75,8 +71,7 @@ console.log(`Container started at ${started.url}`)
 const response = await fetch(started.url)
 console.log('Response:', await response.text())
 
-// Stop the container
-await started.stop()
+await container.stop()
 ```
 
 # Available commands

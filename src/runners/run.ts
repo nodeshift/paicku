@@ -1,47 +1,51 @@
 import {GenericContainer, type StartedTestContainer, Wait} from 'testcontainers'
 
-import {type EnvsForRun} from '../types/index.js'
+import {type Envs, type EnvsForRun} from '../types/index.js'
 
-export type StartOptions = {
-  environment?: Record<string, string>
-  envsForRun?: EnvsForRun
-  imageName: string
+export type BuiltImageRunOptions = {
+  envs?: Envs
   port?: number
   startupTimeoutMs?: number
   wait?: {path?: string; statusCode?: number} | false
 }
 
-export interface StartResult {
-  container: StartedTestContainer
-  host: string
-  port: number
+type RunOptions = {
+  envsForRun?: EnvsForRun
+  imageName: string
+} & BuiltImageRunOptions
+
+export interface RunningContainer {
   stop(): Promise<void>
   url: string
 }
 
-type StartRunnerOptions = {
-  env?: Record<string, string | undefined>
+interface RunResult extends RunningContainer {
+  container: StartedTestContainer
+  host: string
+  port: number
 }
 
-function applyRuntimeEnv(envsForRun?: EnvsForRun, extraEnv?: Record<string, string | undefined>): void {
-  const envToApply = {...envsForRun, ...extraEnv}
+function applyRuntimeEnv(envsForRun?: EnvsForRun): void {
+  if (!envsForRun) {
+    return
+  }
 
-  for (const [key, value] of Object.entries(envToApply)) {
+  for (const [key, value] of Object.entries(envsForRun)) {
     if (value !== undefined) {
       process.env[key] = value
     }
   }
 }
 
-export async function runStart(options: StartOptions, runnerOptions: StartRunnerOptions = {}): Promise<StartResult> {
-  const {environment, envsForRun, imageName, port = 8080, startupTimeoutMs, wait} = options
+export async function run(options: RunOptions): Promise<RunResult> {
+  const {envs, envsForRun, imageName, port = 8080, startupTimeoutMs, wait} = options
 
-  applyRuntimeEnv(envsForRun, runnerOptions.env)
+  applyRuntimeEnv(envsForRun)
 
   let container = new GenericContainer(imageName).withExposedPorts(port)
 
-  if (environment) {
-    container = container.withEnvironment(environment)
+  if (envs) {
+    container = container.withEnvironment(envs)
   }
 
   if (wait !== false) {

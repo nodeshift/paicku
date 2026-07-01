@@ -16,24 +16,20 @@ describe('programmatic API build (podman)', () => {
   it('should build a Nodejs app', async () => {
     const paicku = createPaicku()
 
-    const {envsForRun, imageName, stdout} = await paicku.build({
+    const container = await paicku.build({
       builder: 'docker.io/paketobuildpacks/builder-jammy-base',
       'container-runtime': 'podman',
       path: testDataPath,
     })
 
-    expect(stdout.join('\n')).to.contain(`Successfully built image '${imageName}'`)
+    expect(container.stdout.join('\n')).to.contain(`Successfully built image '${container.imageName}'`)
 
-    const inspectResult = await paicku.inspect(imageName, {'container-runtime': 'podman', output: 'json'})
+    const inspectResult = await paicku.inspect(container.imageName, {'container-runtime': 'podman', output: 'json'})
     expect(inspectResult.parsedStdout).to.not.be.null
 
     let started
     try {
-      started = await paicku.start({
-        envsForRun,
-        imageName,
-        port,
-      })
+      started = await container.run({port})
 
       const response = await fetch(started.url)
       expect(response.status).to.equal(200)
@@ -43,7 +39,7 @@ describe('programmatic API build (podman)', () => {
         await started.stop()
       }
 
-      await execa('podman', ['rmi', imageName], {reject: false})
+      await execa('podman', ['rmi', container.imageName], {reject: false})
     }
   })
 })

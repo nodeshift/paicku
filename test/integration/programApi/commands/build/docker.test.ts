@@ -12,28 +12,22 @@ const port = 8080
 
 describe('programmatic API build (docker)', () => {
   it('should build a Nodejs app', async () => {
-    const imageName = `${crypto.randomUUID()}`
     const paicku = createPaicku()
 
-    const result = await paicku.build({
+    const container = await paicku.build({
       builder: 'docker.io/paketobuildpacks/builder-jammy-base',
       'container-runtime': 'docker',
-      imageName,
       path: testDataPath,
     })
 
-    expect(result.stdout.join('\n')).to.contain(`Successfully built image '${imageName}'`)
+    expect(container.stdout.join('\n')).to.contain(`Successfully built image '${container.imageName}'`)
 
-    const inspectResult = await paicku.inspect(result.imageName, {output: 'json'})
+    const inspectResult = await paicku.inspect(container.imageName, {output: 'json'})
     expect(inspectResult.parsedStdout).to.not.be.null
 
     let started
     try {
-      started = await paicku.start({
-        envsForRun: result.envsForRun,
-        imageName: result.imageName,
-        port,
-      })
+      started = await container.run({port})
 
       const response = await fetch(started.url)
       expect(response.status).to.equal(200)
@@ -43,7 +37,7 @@ describe('programmatic API build (docker)', () => {
         await started.stop()
       }
 
-      await execa('docker', ['rmi', imageName], {reject: false})
+      await execa('docker', ['rmi', container.imageName], {reject: false})
     }
   })
 })
