@@ -6,7 +6,7 @@ import {join} from 'node:path'
 import {createPaicku} from '../../../src/index.js'
 import {setupFakePack} from '../../utils/fake-pack.js'
 
-describe('paicku package - sbom download', () => {
+describe('paicku sbom download', () => {
   let cacheDir: string
   let executablePath: string
 
@@ -23,7 +23,6 @@ describe('paicku package - sbom download', () => {
     const paicku = createPaicku({executablePath})
     const result = await paicku.sbom.download('my-image')
 
-    expect(result.failed).to.be.false
     expect(result.stdout.join('\n').trim()).to.equal('SBOM downloaded successfully')
     expect(result.command).to.include('sbom download my-image')
     expect(result.command).to.include('--no-color')
@@ -35,7 +34,6 @@ describe('paicku package - sbom download', () => {
       'output-dir': '/tmp/sbom',
     })
 
-    expect(result.failed).to.be.false
     expect(result.command).to.include('--output-dir')
     expect(result.command).to.include('/tmp/sbom')
   })

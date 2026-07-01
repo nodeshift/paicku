@@ -604,9 +604,7 @@ const result = await paicku.sbom.download('my-image:latest', {
   'output-dir': './sbom',
 })
 
-if (!result.failed) {
-  console.log('SBOM downloaded successfully')
-}
+console.log('SBOM downloaded successfully')
 ```
 
 ## Contributing
