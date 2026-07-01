@@ -6,7 +6,7 @@ import {join} from 'node:path'
 import {createPaicku} from '../../../src/index.js'
 import {setupFakePack} from '../../utils/fake-pack.js'
 
-describe('paicku package - builder suggest', () => {
+describe('paicku builder suggest', () => {
   let cacheDir: string
   let executablePath: string
 
@@ -23,7 +23,6 @@ describe('paicku package - builder suggest', () => {
     const paicku = createPaicku({executablePath})
     const result = await paicku.builder.suggest()
 
-    expect(result.failed).to.be.false
     expect(result.stdout.join('\n').trim()).to.equal('Suggested builders:\n  - paketobuildpacks/builder:base')
     expect(result.command).to.include('builder suggest')
     expect(result.command).to.include('--no-color')
@@ -35,7 +34,6 @@ describe('paicku package - builder suggest', () => {
       verbose: true,
     })
 
-    expect(result.failed).to.be.false
     expect(result.command).to.include('--verbose')
   })
 })

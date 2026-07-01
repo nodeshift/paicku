@@ -8,12 +8,9 @@ import {parseFlags} from '../utils/index.js'
 export type BuilderSuggestOptions = Partial<Interfaces.InferredFlags<typeof builderSuggestFlags>>
 
 export interface BuilderSuggestResult {
-  code: string
   command: string
-  exitCode: number
-  failed: boolean
-  stderr: string[]
   stdout: string[]
+  warnings: string[]
 }
 
 type BuilderSuggestRunnerOptions = {
@@ -77,11 +74,8 @@ export async function runBuilderSuggest(
   }
 
   return {
-    code: result.code ?? '',
     command: result.command,
-    exitCode: result.exitCode ?? 1,
-    failed: result.failed,
-    stderr: [...logs.warn, ...logs.error],
     stdout: logs.log,
+    warnings: logs.warn,
   }
 }

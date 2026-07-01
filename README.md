@@ -586,11 +586,7 @@ const paicku = createPaicku()
 
 const result = await paicku.builder.suggest()
 
-if (result.failed) {
-  console.error('Command failed:', result.stderr)
-} else {
-  console.log('Suggested builders:', result.stdout)
-}
+console.log('Suggested builders:', result.stdout)
 ```
 
 #### Download SBOM

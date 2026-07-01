@@ -11,7 +11,6 @@ describe('programmatic API builder suggest (docker)', () => {
 
     const result = await paicku.builder.suggest()
 
-    expect(result.failed).to.be.false
     expect(result.stdout.join('\n')).to.contain('Suggested builders:')
   })
 })
