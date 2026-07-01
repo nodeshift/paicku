@@ -568,9 +568,7 @@ const result = await paicku.inspect('my-image:latest', {
   output: 'json',
 })
 
-if (!result.failed) {
-  console.log('Image information:', result.parsedStdout)
-}
+console.log('Image information:', result.parsedStdout)
 ```
 
 #### Get builder suggestions

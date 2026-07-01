@@ -6,7 +6,7 @@ import {join} from 'node:path'
 import {createPaicku} from '../../../src/index.js'
 import {setupFakePack} from '../../utils/fake-pack.js'
 
-describe('paicku package', () => {
+describe('paicku inspect', () => {
   let cacheDir: string
   let executablePath: string
 
@@ -26,7 +26,6 @@ describe('paicku package', () => {
       output: 'json',
     })
 
-    expect(result.failed).to.be.false
     expect(result.stdout.join('\n').trim()).to.equal('{"remote":null,"local":null}')
     expect(result.parsedStdout).to.deep.equal({local: null, remote: null})
     expect(result.command).to.include('--bom')
@@ -81,7 +80,6 @@ describe('paicku package', () => {
       output: 'json',
     })
 
-    expect(result.failed).to.be.false
     expect(result.stdout.join('\n').trim()).to.equal(JSON.stringify(inspectData))
     expect(result.parsedStdout).to.deep.equal(inspectData)
     expect(result.command).to.include('inspect yarn-simple-app:latest')

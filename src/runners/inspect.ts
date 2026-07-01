@@ -16,14 +16,11 @@ import {
 export type InspectOptions = Partial<Interfaces.InferredFlags<typeof inspectFlags>>
 
 export interface InspectResult {
-  code: string
   command: string
-  exitCode: number
-  failed: boolean
   parseError?: Error
   parsedStdout: unknown
-  stderr: string[]
   stdout: string[]
+  warnings: string[]
 }
 
 type InspectRunnerOptions = {
@@ -141,13 +138,10 @@ export async function runInspect(
   const {data, parseError} = options.output === 'json' ? parseCommandJsonOutput(result.stdout ?? '') : {data: null}
 
   return {
-    code: result.code ?? '',
     command: result.command,
-    exitCode: result.exitCode ?? 1,
-    failed: result.failed,
     parseError,
     parsedStdout: data,
-    stderr: [...logs.warn, ...logs.error],
     stdout: logs.log,
+    warnings: logs.warn,
   }
 }
