@@ -8,12 +8,9 @@ import {parseFlags} from '../utils/index.js'
 export type SbomDownloadOptions = Partial<Interfaces.InferredFlags<typeof sbomFlags>>
 
 export interface SbomDownloadResult {
-  code: string
   command: string
-  exitCode: number
-  failed: boolean
-  stderr: string[]
   stdout: string[]
+  warnings: string[]
 }
 
 type SbomDownloadRunnerOptions = {
@@ -77,11 +74,8 @@ export async function runSbomDownload(
   }
 
   return {
-    code: result.code ?? '',
     command: result.command,
-    exitCode: result.exitCode ?? 1,
-    failed: result.failed,
-    stderr: [...logs.warn, ...logs.error],
     stdout: logs.log,
+    warnings: logs.warn,
   }
 }

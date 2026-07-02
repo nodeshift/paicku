@@ -63,25 +63,15 @@ const result = await paicku.build({
   builder: 'docker.io/paketobuildpacks/builder-ubi8-base',
 })
 
-if (result.failed) {
-  console.error('Build failed:', result.stderr)
-  process.exit(1)
-}
+const container = await result.run({exposedPorts: 8080})
 
-const started = await paicku.start({
-  imageName: buildResult.imageName,
-  envsForRun: buildResult.envsForRun,
-  port: 8080,
-})
-
-console.log(`Container started at ${started.url}`)
+console.log(`Container started at ${container.getUrl()}`)
 
 // Make a request
-const response = await fetch(started.url)
+const response = await fetch(container.getUrl())
 console.log('Response:', await response.text())
 
-// Stop the container
-await started.stop()
+await container.stop()
 ```
 
 # Available commands
@@ -573,9 +563,7 @@ const result = await paicku.inspect('my-image:latest', {
   output: 'json',
 })
 
-if (!result.failed) {
-  console.log('Image information:', result.parsedStdout)
-}
+console.log('Image information:', result.parsedStdout)
 ```
 
 #### Get builder suggestions
@@ -591,11 +579,7 @@ const paicku = createPaicku()
 
 const result = await paicku.builder.suggest()
 
-if (result.failed) {
-  console.error('Command failed:', result.stderr)
-} else {
-  console.log('Suggested builders:', result.stdout)
-}
+console.log('Suggested builders:', result.stdout)
 ```
 
 #### Download SBOM
@@ -613,9 +597,7 @@ const result = await paicku.sbom.download('my-image:latest', {
   'output-dir': './sbom',
 })
 
-if (!result.failed) {
-  console.log('SBOM downloaded successfully')
-}
+console.log('SBOM downloaded successfully')
 ```
 
 ## Contributing

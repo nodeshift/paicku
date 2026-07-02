@@ -21,15 +21,12 @@ export type BuildOptions = Partial<Interfaces.InferredFlags<typeof buildFlags>>
 import process from 'node:process'
 
 export interface BuildResult {
-  code: string
   command: string
   containerRuntime: string
   envsForRun: EnvsForRun
-  exitCode: number
-  failed: boolean
   imageName: string
-  stderr: string[]
   stdout: string[]
+  warnings: string[]
 }
 
 type BuildRunnerOptions = {
@@ -157,14 +154,11 @@ export async function runBuild(
   }
 
   return {
-    code: result.code ?? '',
     command: result.command,
     containerRuntime,
     envsForRun,
-    exitCode: result.exitCode ?? 1,
-    failed: result.failed,
     imageName: resolvedImageName,
-    stderr: [...logs.warn, ...logs.error],
     stdout: logs.log,
+    warnings: logs.warn,
   }
 }
