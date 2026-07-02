@@ -2,6 +2,7 @@ import {config, expect} from 'chai'
 import {execa} from 'execa'
 import {it} from 'mocha'
 import path from 'node:path'
+import {text} from 'node:stream/consumers'
 import {fileURLToPath} from 'node:url'
 
 import {createPaicku} from '../../../../../src/index.js'
@@ -34,6 +35,10 @@ describe('programmatic API build (podman)', () => {
       const response = await fetch(started.url)
       expect(response.status).to.equal(200)
       expect(await response.text()).to.equal('hello world')
+
+      expect(started.logs).to.be.a('function')
+      const logOutput = await text(await started.logs())
+      expect(logOutput).to.contain('server is listening on')
     } finally {
       if (started) {
         await started.stop()

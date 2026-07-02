@@ -36,6 +36,7 @@ type RunOptions = {
 } & BuiltImageRunOptions
 
 export interface RunningContainer {
+  logs(): Promise<NodeJS.ReadableStream>
   stop(): Promise<void>
   url: string | undefined
 }
@@ -104,10 +105,12 @@ export async function run(options: RunOptions): Promise<RunResult> {
       return started.getMappedPort(containerPort)
     },
     host: started.getHost(),
+    logs() {
+      return started.logs()
+    },
     async stop() {
       await started.stop()
     },
-
     url: primaryMappedPort ? `http://${host}:${primaryMappedPort}` : undefined,
   }
 }
