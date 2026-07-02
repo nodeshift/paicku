@@ -13,6 +13,8 @@ export {
   type BuilderSuggestOptions,
   type BuilderSuggestResult,
   type BuiltImageRunOptions,
+  type ExposedPort,
+  type ExposedPorts,
   type InspectOptions,
   type InspectResult,
   type RunningContainer,

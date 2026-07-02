@@ -63,7 +63,7 @@ const result = await paicku.build({
   builder: 'docker.io/paketobuildpacks/builder-ubi8-base',
 })
 
-const container = await result.run({port: 8080})
+const container = await result.run({exposedPorts: 8080})
 
 console.log(`Container started at ${started.url}`)
 

@@ -8,26 +8,26 @@ import {createPaicku} from '../../../../../src/index.js'
 
 const TEST_DIR = path.join(path.dirname(fileURLToPath(import.meta.url)), '../../..')
 const testDataPath = path.join(TEST_DIR, 'testdata/nodejs_simple_app')
-const port = 8080
+const exposedPorts = 8080
 
 describe('programmatic API build (docker)', () => {
   it('should build a Nodejs app', async () => {
     const paicku = createPaicku()
 
-    const container = await paicku.build({
+    const containerImage = await paicku.build({
       builder: 'docker.io/paketobuildpacks/builder-jammy-base',
       'container-runtime': 'docker',
       path: testDataPath,
     })
 
-    expect(container.stdout.join('\n')).to.contain(`Successfully built image '${container.imageName}'`)
+    expect(containerImage.stdout.join('\n')).to.contain(`Successfully built image '${containerImage.imageName}'`)
 
-    const inspectResult = await paicku.inspect(container.imageName, {output: 'json'})
+    const inspectResult = await paicku.inspect(containerImage.imageName, {output: 'json'})
     expect(inspectResult.parsedStdout).to.not.be.null
 
     let started
     try {
-      started = await container.run({port})
+      started = await containerImage.run({exposedPorts})
 
       const response = await fetch(started.url)
       expect(response.status).to.equal(200)
@@ -37,7 +37,7 @@ describe('programmatic API build (docker)', () => {
         await started.stop()
       }
 
-      await execa('docker', ['rmi', container.imageName], {reject: false})
+      await execa('docker', ['rmi', containerImage.imageName], {reject: false})
     }
   })
 })

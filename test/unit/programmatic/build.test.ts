@@ -36,30 +36,30 @@ describe('paicku package - build', () => {
 
   it('paicku().build returns structured result', async () => {
     const paicku = createPaicku({executablePath})
-    const result = await paicku.build({
+    const containerImage = await paicku.build({
       builder: 'docker.io/paketobuildpacks/builder-ubi8-base',
       imageName: 'my-image',
       path: '/path/to/app',
     })
 
-    expect(result.run).to.be.a('function')
-    expect(result.stdout.at(-1)?.trim()).to.equal("Successfully built image 'my-image'")
-    expect(result.imageName).to.equal('my-image')
-    expect(result.command).to.include('build my-image')
-    expect(result.command).to.include('--no-color')
+    expect(containerImage.run).to.be.a('function')
+    expect(containerImage.stdout.at(-1)?.trim()).to.equal("Successfully built image 'my-image'")
+    expect(containerImage.imageName).to.equal('my-image')
+    expect(containerImage.command).to.include('build my-image')
+    expect(containerImage.command).to.include('--no-color')
   })
 
   it('paicku().build collects logs in separate arrays', async () => {
     const paicku = createPaicku({executablePath})
 
-    const result = await paicku.build({
+    const containerImage = await paicku.build({
       builder: 'docker.io/paketobuildpacks/builder-ubi8-base',
       imageName: 'my-image',
       path: '/path/to/app',
     })
 
-    expect(result.stdout.some((message) => message.includes('Building image my-image'))).to.be.true
-    expect(result.warnings.some((message) => message.includes('container runtime'))).to.be.true
+    expect(containerImage.stdout.some((message) => message.includes('Building image my-image'))).to.be.true
+    expect(containerImage.warnings.some((message) => message.includes('container runtime'))).to.be.true
   })
 
   it('paicku().build collects error logs when builder lacks registry prefix', async () => {
