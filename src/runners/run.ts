@@ -36,13 +36,12 @@ type RunOptions = {
 } & BuiltImageRunOptions
 
 export interface RunningContainer {
+  getUrl(options?: {port?: number; scheme?: string}): string
   logs(): Promise<NodeJS.ReadableStream>
   stop(): Promise<void>
-  url: string | undefined
 }
 
 interface RunResult extends RunningContainer {
-  buildUrl(options: {port: number; scheme?: string}): string
   container: StartedTestContainer
   getFirstMappedPort(): number
   getMappedPort(containerPort: number): number
@@ -90,13 +89,9 @@ export async function run(options: RunOptions): Promise<RunResult> {
   const started = await container.start()
 
   const primaryPort = ports && ports.length > 0 ? ports[0] : undefined
-  const primaryMappedPort = primaryPort ? started.getMappedPort(primaryPort) : undefined
   const host = started.getHost()
 
   return {
-    buildUrl({port, scheme = 'http'}: {port: number; scheme?: string}) {
-      return `${scheme}://${host}:${started.getMappedPort(port)}`
-    },
     container: started,
     getFirstMappedPort() {
       if (!primaryPort) {
@@ -108,6 +103,13 @@ export async function run(options: RunOptions): Promise<RunResult> {
     getMappedPort(containerPort: number) {
       return started.getMappedPort(containerPort)
     },
+    getUrl({port = primaryPort, scheme = 'http'}: {port?: number; scheme?: string} = {}) {
+      if (port === undefined) {
+        throw new Error('No ports were exposed during the run command.')
+      }
+
+      return `${scheme}://${host}:${started.getMappedPort(port)}`
+    },
     host: started.getHost(),
     logs() {
       return started.logs()
@@ -115,6 +117,5 @@ export async function run(options: RunOptions): Promise<RunResult> {
     async stop() {
       await started.stop()
     },
-    url: primaryMappedPort ? `http://${host}:${primaryMappedPort}` : undefined,
   }
 }

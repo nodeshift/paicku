@@ -32,7 +32,7 @@ describe('programmatic API build (podman)', () => {
     try {
       container = await containerImage.run({exposedPorts})
 
-      const response = await fetch(container.url)
+      const response = await fetch(container.getUrl())
       expect(response.status).to.equal(200)
       expect(await response.text()).to.equal('hello world')
 

@@ -65,10 +65,10 @@ const result = await paicku.build({
 
 const container = await result.run({exposedPorts: 8080})
 
-console.log(`Container started at ${started.url}`)
+console.log(`Container started at ${container.getUrl()}`)
 
 // Make a request
-const response = await fetch(started.url)
+const response = await fetch(container.getUrl())
 console.log('Response:', await response.text())
 
 await container.stop()
