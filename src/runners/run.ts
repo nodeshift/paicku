@@ -62,18 +62,22 @@ function applyRuntimeEnv(envsForRun?: EnvsForRun): void {
 }
 
 export async function run(options: RunOptions): Promise<RunResult> {
-  const {envs, envsForRun, exposedPorts = 8080, imageName, startupTimeoutMs, wait} = options
-  const ports = normalizeExposedPorts(exposedPorts)
+  const {envs, envsForRun, exposedPorts, imageName, startupTimeoutMs, wait} = options
 
   applyRuntimeEnv(envsForRun)
 
-  let container = new GenericContainer(imageName).withExposedPorts(...ports)
+  let container = new GenericContainer(imageName)
+
+  const ports = exposedPorts === undefined ? undefined : normalizeExposedPorts(exposedPorts)
+  if (ports && ports.length > 0) {
+    container = container.withExposedPorts(...ports)
+  }
 
   if (envs) {
     container = container.withEnvironment(envs)
   }
 
-  if (wait !== false) {
+  if (wait !== false && ports && ports.length > 0) {
     const waitPath = wait?.path ?? '/'
     const statusCode = wait?.statusCode ?? 200
     container = container.withWaitStrategy(Wait.forHttp(waitPath, ports[0]).forStatusCode(statusCode))
