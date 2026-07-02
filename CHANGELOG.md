@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.2.0](https://github.com/nodeshift/paicku/compare/paicku-v0.1.0...paicku-v0.2.0) (2026-07-02)
+
+
+### ⚠ BREAKING CHANGES
+
+* removing error logs from return result on programmatic API
+
+### Features
+
+* Adding fetching the logs of the container ([49d13b5](https://github.com/nodeshift/paicku/commit/49d13b5b2730e355da0838c5bf196a25d43d1213))
+* removing error logs from return result on programmatic API ([291d65b](https://github.com/nodeshift/paicku/commit/291d65b87e9ba34bb9e73cd5354aa07b50d7dcf2))
+
+
+### Bug Fixes
+
+* removing the default exposedPort value ([59eebe1](https://github.com/nodeshift/paicku/commit/59eebe12e7b01be897602fd36b9ef204e5868722))
+* Replacing url with getUrl function ([d559091](https://github.com/nodeshift/paicku/commit/d559091b54511528abe02865e5871a1a3897d4c2))
+
 ## [0.1.0](https://github.com/nodeshift/paicku/compare/paicku-v0.0.8...paicku-v0.1.0) (2026-06-26)
 
 
