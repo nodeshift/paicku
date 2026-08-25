@@ -2,99 +2,72 @@
 
 Paicku is a Node.js wrapper around Cloud Native Buildpacks' [pack CLI](https://github.com/buildpacks/pack). It turns your app into a container image from the command line, or from a test, without you installing pack yourself.
 
-- **CLI and library.** Run `npx paicku build`, or call `createPaicku()` from Node.js to build, start, and HTTP-test the image.
+- **CLI and library.** Run `npx paicku build`, or call `await paicku.build()` from Node.js to build, start, and test your containerized application.
 - **Docker or Podman.** Uses whichever runtime is installed; pin one with `--container-runtime`.
 - **No pack install.** Downloads pack into the CLI cache on first run.
 - **Defaults that produce an image.** A random image name and the Paketo builder `docker.io/paketobuildpacks/builder-ubi8-base` if you omit them.
 - **Node.js >= 22**
 
+## Getting started
+
+### Library
+
+```sh
+npm install paicku --save-dev
+```
+
+Without any testing framework
+
 ```javascript
 import {createPaicku} from 'paicku'
 
 const paicku = createPaicku()
 
-const image = await paicku.build({ path: './app' })
+// returns your containerized application image
+const image = await paicku.build({path: './app'})
 
+// run the image using testcontainers - https://testcontainers.com
 const container = await image.run({exposedPorts: 8080})
 
 try {
+  // Do a request to the running container application
   const response = await fetch(container.getUrl())
-  console.log(await response.text()) //=> your app's homepage
+
+  // Print the response
+  console.log(await response.text())
 } finally {
   await container.stop()
 }
 ```
 
-## Table of Contents
-
-- [Getting started](#getting-started)
-  - [CLI](#cli)
-  - [Library](#library)
-- [Programmatic API](#programmatic-api)
-- [CLI reference](#cli-reference)
-- [Examples](#examples)
-- [Contributing](#contributing)
-
-## Getting started
-
-You need **Node.js 22+** and **Docker or Podman**.
+See [examples/programmatic/](examples/programmatic/) for complete scripts.
 
 ### CLI
 
-Build the app in the current directory into a **local** image (not a registry) with a generated name:
-
 ```sh
-cd ./my-node-app
-npx paicku build
+npx paicku build --path ./app
 ```
 
-Or install globally and pass an image name and path:
+Or install it globally
 
 ```sh
 npm install -g paicku
-paicku build my-app --path /path/to/app
+paicku build my-app-name --path ./app
 ```
 
-Use `--publish` only when you want pack to push the image to the registry in the image name.
+<!-- commands -->
 
-### Library
+# Command Topics
 
-```sh
-npm install paicku
-```
+- [`paicku build`](docs/build.md) - Build an image
+- [`paicku builder`](docs/builder.md) - Display suggested builders for the given application
+- [`paicku help`](docs/help.md) - Display help for paicku.
+- [`paicku inspect`](docs/inspect.md) - Show information about a built app image
+- [`paicku sbom`](docs/sbom.md) - Interact with SBoM
 
-```javascript
-import {createPaicku} from 'paicku'
+<!-- commandsstop -->
 
-const paicku = createPaicku()
-const image = await paicku.build({path: './app'})
-const container = await image.run({exposedPorts: 8080})
-const response = await fetch(container.getUrl())
-console.log(await response.text()) //=> your app's homepage
-await container.stop()
-```
-
-Every CLI command has a matching method on the client returned by `createPaicku()`.
-
-## Programmatic API
-
-```javascript
-const paicku = createPaicku({
-  cwd: process.cwd(), // optional working directory for pack
-  executablePath: '/path/to/pack', // optional; otherwise pack is downloaded
-})
-```
-
-`paicku.build()` returns a built image. Call `image.run()` to start it with [testcontainers](https://testcontainers.com/). Pass `exposedPorts` when you need a URL — there is no default port.
-
-```javascript
-const container = await image.run({exposedPorts: 8080})
-
-container.getUrl() // http://host:mappedPort
-container.getUrl({port: 9090, scheme: 'https'})
-await container.logs()
-await container.stop()
-```
+## Examples
 
 With Mocha and SuperTest:
 
@@ -105,11 +78,13 @@ import request from 'supertest'
 import {createPaicku} from 'paicku'
 
 describe('my app', () => {
+  // Configure paicku
   const paicku = createPaicku()
   let image
   let container
 
   before(async () => {
+    // returns your containerized application image
     image = await paicku.build({path: './app'})
   })
 
@@ -118,33 +93,39 @@ describe('my app', () => {
   })
 
   it('serves the homepage', async () => {
+    // run the image using testcontainers - https://testcontainers.com
     container = await image.run({exposedPorts: 8080})
+    // do a request with supertest
     const response = await request(container.getUrl()).get('/')
+    // evaluate the response
     expect(response.status).to.equal(200)
   })
 })
 ```
 
-See `examples/programmatic/` for complete scripts.
+See [examples/programmatic/](examples/programmatic/) for complete scripts.
 
-## CLI reference
+Configuring default behaviour of paicku
 
-Flag-level help for each command is in `docs/`.
+```javascript
+const paicku = createPaicku({
+  cwd: process.cwd(), // optional working directory for pack
+  executablePath: '/path/to/pack', // optional, otherwise default pack is downloaded
+})
+```
 
-<!-- commands -->
-# Command Topics
+Pass `exposedPorts` when you need a URL as there is no default port.
 
-* [`paicku build`](docs/build.md) - Build an image
-* [`paicku builder`](docs/builder.md) - Display suggested builders for the given application
-* [`paicku help`](docs/help.md) - Display help for paicku.
-* [`paicku inspect`](docs/inspect.md) - Show information about a built app image
-* [`paicku sbom`](docs/sbom.md) - Interact with SBoM
+```javascript
+const container = await image.run({exposedPorts: 8080})
 
-<!-- commandsstop -->
+container.getUrl()
+container.getUrl({port: 9090, scheme: 'https'})
+await container.logs()
+await container.stop()
+```
 
-## Examples
-
-Programmatic snippets assume `const paicku = createPaicku()`.
+The folloing programmatic snippets assume `const paicku = createPaicku()`.
 
 ### Build with Podman
 
@@ -252,7 +233,6 @@ npm install
 Run the CLI against source:
 
 ```sh
-./bin/dev.js
 ./bin/dev.js build test/integration/testdata/nodejs_simple_app --container-runtime podman
 ```
 
