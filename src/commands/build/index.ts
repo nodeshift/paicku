@@ -22,11 +22,11 @@ export default class Build extends Command {
     },
     {
       command: `<%= config.bin %> <%= command.id %> image-name --builder docker.io/paketobuildpacks/builder-ubi8-base`,
-      description: 'Build and app with a specific image-name and builder',
+      description: 'Build an app with a specific image-name and builder',
     },
     {
-      command: `<%= config.bin %> <%= command.id %> backend-image-name  --path https://github.com/nodeshift/mern-workshop --context-dir backend`,
-      description: 'Build an app from a remote git repository with specifying a sub-directory.',
+      command: `<%= config.bin %> <%= command.id %> backend-image-name --path https://github.com/nodeshift/mern-workshop:backend`,
+      description: 'Build an app from a remote git repository, using a sub-directory',
     },
     {
       command: `<%= config.bin %> <%= command.id %> image-name --builder docker.io/paketobuildpacks/builder-ubi8-base --path /path/to/app`,

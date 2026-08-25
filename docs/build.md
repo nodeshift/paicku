@@ -21,7 +21,7 @@ USAGE
     [--volume <value>...] [--workspace <value>]
 
 ARGUMENTS
-  IMAGENAME  Name of the output image
+  [IMAGENAME]  Name of the output image
 
 FLAGS
   -B, --builder=<value>
@@ -195,17 +195,17 @@ EXAMPLES
 
     $ paicku build
 
-  Build and app with a specific image-name and builder
+  Build an app with a specific image-name and builder
 
     $ paicku build image-name --builder docker.io/paketobuildpacks/builder-ubi8-base
 
-  Build an app from a remote git repository with specifying a sub-directory.
+  Build an app from a remote git repository, using a sub-directory
 
-    $ paicku build backend-image-name  --path https://github.com/nodeshift/mern-workshop --context-dir backend
+    $ paicku build backend-image-name --path https://github.com/nodeshift/mern-workshop:backend
 
   Build an app with a specific image-name and builder with a specific local path
 
     $ paicku build image-name --builder docker.io/paketobuildpacks/builder-ubi8-base --path /path/to/app
 ```
 
-_See code: [src/commands/build/index.ts](https://github.com/nodeshift/paicku/blob/v0.0.7/src/commands/build/index.ts)_
+_See code: [src/commands/build/index.ts](https://github.com/nodeshift/paicku/blob/v0.2.0/src/commands/build/index.ts)_
