@@ -22,16 +22,17 @@ jobs:
 
             - name: Fetch Latest pack
               id: latest-pack
-              run: |
-                  version=$(curl -fsSL https://api.github.com/repos/buildpacks/pack/releases/latest | jq -r .tag_name)
-                  version="${version#v}"
-                  echo "version=${version}" >> "$GITHUB_OUTPUT"
+              uses: paketo-buildpacks/github-config/actions/tools/latest@main
+              with:
+                  token: ${{ secrets.GITHUB_TOKEN }}
+                  repo: buildpacks/pack
 
             - name: Update pack version in tools.json
               id: update-pack
               run: |
                   OLD_VERSION=$(jq -r .pack ./tools.json)
                   NEW_VERSION="${{ steps.latest-pack.outputs.version }}"
+                  NEW_VERSION="${NEW_VERSION#v}"
 
                   if [ "${OLD_VERSION}" = "${NEW_VERSION}" ]; then
                     echo "update_needed=false" >> "$GITHUB_OUTPUT"
@@ -75,7 +76,7 @@ jobs:
               uses: paketo-buildpacks/github-config/actions/pull-request/open@main
               with:
                   token: ${{ secrets.GITHUB_TOKEN }}
-                  title: "Update pack to v${{ steps.latest-pack.outputs.version }}"
+                  title: "Upgrading pack CLI"
                   branch: automation/pack/update
 
     failure:
