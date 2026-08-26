@@ -45,7 +45,8 @@
   "files": [
     "/bin",
     "/dist",
-    "/oclif.manifest.json"
+    "/oclif.manifest.json",
+    "/tools.json"
   ],
   "homepage": "https://github.com/nodeshift/paicku",
   "keywords": [
