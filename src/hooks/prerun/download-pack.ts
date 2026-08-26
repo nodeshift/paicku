@@ -16,7 +16,6 @@ type toolsConfig = {
 }
 
 const toolsConfigPath = fileURLToPath(new URL('../../../tools.json', import.meta.url))
-const DEFAULT_PACK_VERSION = getDefaultPackVersion()
 
 export type DownloadPackResult = {
   logs: string[]
@@ -56,7 +55,7 @@ export async function downloadPack(
   const compression = platform === 'win32' ? 'zip' : 'tgz'
 
   const {
-    env: {PAICKU_PACK_VERSION: packVersion = DEFAULT_PACK_VERSION},
+    env: {PAICKU_PACK_VERSION: packVersion = getDefaultPackVersion()},
   } = process
 
   const packUrl = getPackUrl(platform, arch, packVersion)
