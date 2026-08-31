@@ -1,3 +1,4 @@
+export {PaickuError, type PaickuErrorOptions} from './errors/paicku-error.js'
 export {type DownloadPackOptions, type DownloadPackResult, downloadPack} from './hooks/prerun/download-pack.js'
 export {
   type BuiltImage,

@@ -70,7 +70,7 @@ export async function runSbomDownload(
   const result = await subprocess
 
   if (result.failed) {
-    console.error(`sbom download failed.`, {exit: result.exitCode ?? 1})
+    console.error('SBOM download failed.', {command: result.command, exit: result.exitCode ?? 1})
   }
 
   return {

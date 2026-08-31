@@ -1,3 +1,4 @@
+import {PaickuError} from '../errors/paicku-error.js'
 import {type BuildOptions} from '../runners/build.js'
 
 export interface Flags {
@@ -24,8 +25,13 @@ export type PaickuBuildOptions = {
   imageName?: string
 } & BuildOptions
 
+export type RunnerErrorOptions = {
+  command?: string
+  exit?: number
+}
+
 export type RunnerConsole = {
-  error: (message: string, options?: {exit?: number}) => never
+  error: (message: string, options?: RunnerErrorOptions) => never
   log: (message: string) => void
   logToStderr: (message: string) => void
   warn: (message: string) => void
@@ -34,7 +40,7 @@ export type RunnerConsole = {
 export type Confirm = (options: {default?: boolean; message: string}) => Promise<boolean>
 
 export const throwOnConfirm: Confirm = async ({message}) => {
-  throw new Error(
+  throw new PaickuError(
     `paicku needs a confirmation that cannot be answered in non-interactive mode: "${message}". ` +
       `Run paicku interactively to answer it, or complete the required setup manually before retrying.`,
   )
@@ -42,18 +48,23 @@ export const throwOnConfirm: Confirm = async ({message}) => {
 
 export function createRunnerConsole(logs: RunnerLogs): RunnerConsole {
   return {
-    error(message: string): never {
-      logs.error.push(message)
-      throw new Error(message)
+    error(message: string, options?: RunnerErrorOptions): never {
+      throw new PaickuError(message, {
+        command: options?.command,
+        exitCode: options?.exit,
+        stderr: [...logs.error],
+        stdout: [...logs.log],
+        warnings: [...logs.warn],
+      })
     },
     log(message: string) {
       logs.log.push(message)
     },
     logToStderr(message: string) {
-      logs.warn.push(message)
+      logs.error.push(message)
     },
     warn(message: string) {
-      logs.warn.push(message)
+      logs.warn.push('WARN: ' + message)
     },
   }
 }

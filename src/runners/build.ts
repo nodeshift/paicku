@@ -150,7 +150,7 @@ export async function runBuild(
   const result = await subprocess
 
   if (result.failed) {
-    console.error(`Build failed.`, {exit: result.exitCode ?? 1})
+    console.error('Build failed.', {command: result.command, exit: result.exitCode ?? 1})
   }
 
   return {
