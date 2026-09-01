@@ -3,7 +3,7 @@ import {chmod, mkdtemp, rm, writeFile} from 'node:fs/promises'
 import {tmpdir} from 'node:os'
 import {join} from 'node:path'
 
-import {createPaicku} from '../../../src/index.js'
+import {PaickuError, createPaicku} from '../../../src/index.js'
 
 async function setupFakeBuildPack(dir: string): Promise<string> {
   const packPath = join(dir, 'pack')
@@ -73,7 +73,45 @@ describe('paicku package - build', () => {
       })
       expect.fail('Expected build to throw')
     } catch (error) {
-      expect((error as Error).message).to.include('must be prefixed with a registry')
+      expect(error).to.be.instanceOf(PaickuError)
+      const paickuError = error as PaickuError
+      expect(paickuError.message).to.include('must be prefixed with a registry')
+      expect(paickuError.exitCode).to.equal(1)
+      expect(paickuError.command).to.be.undefined
+      expect(paickuError.warnings.some((message) => message.includes('container runtime'))).to.be.true
+    }
+  })
+
+  it('paicku().build throws PaickuError with pack output when pack fails', async () => {
+    const packPath = join(cacheDir, 'pack-fail')
+    await writeFile(
+      packPath,
+      String.raw`#!/bin/sh
+printf '%s\n' "starting build"
+printf '%s\n' "ERROR: failed to build" >&2
+exit 7
+`,
+    )
+    await chmod(packPath, 0o755)
+
+    const paicku = createPaicku({executablePath: packPath})
+
+    try {
+      await paicku.build({
+        builder: 'docker.io/paketobuildpacks/builder-ubi8-base',
+        imageName: 'my-image',
+        path: '/path/to/app',
+      })
+      expect.fail('Expected build to throw')
+    } catch (error) {
+      expect(error).to.be.instanceOf(PaickuError)
+      const paickuError = error as PaickuError
+      expect(paickuError.exitCode).to.equal(7)
+      expect(paickuError.command).to.include('build my-image')
+      expect(paickuError.stdout.some((message) => message.includes('starting build'))).to.be.true
+      expect(paickuError.stderr.some((message) => message.includes('ERROR: failed to build'))).to.be.true
+      expect(paickuError.message).to.include('Build failed. (exit code 7)')
+      expect(paickuError.message).to.not.include('ERROR: failed to build')
     }
   })
 })

@@ -21,16 +21,16 @@
     "@oclif/prettier-config": "^0.2.1",
     "@oclif/test": "^4",
     "@types/adm-zip": "^0.5.7",
-    "@types/chai": "^4",
-    "@types/mocha": "^10",
+    "@types/chai": "^5.2.3",
+    "@types/mocha": "^10.0.10",
     "@types/node": "^22.19.21",
     "c8": "^11.0.0",
-    "chai": "^4",
+    "chai": "^4.5.0",
     "eslint": "^8",
     "eslint-config-oclif": "^5",
     "eslint-config-oclif-typescript": "^3",
     "eslint-config-prettier": "^9",
-    "mocha": "^10",
+    "mocha": "^11.8.0",
     "oclif": "^4",
     "shx": "^0.3.3",
     "ts-node": "^10",
@@ -45,7 +45,8 @@
   "files": [
     "/bin",
     "/dist",
-    "/oclif.manifest.json"
+    "/oclif.manifest.json",
+    "/tools.json"
   ],
   "homepage": "https://github.com/nodeshift/paicku",
   "keywords": [

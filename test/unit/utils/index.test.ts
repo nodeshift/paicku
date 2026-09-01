@@ -7,6 +7,7 @@ import {
   gitIsInstalled,
   hasRegistryPrefix,
   parseFlags,
+  parseGitRemoteRepo,
   parseURL,
   sortArrayBasedOnOrder,
 } from '../../../src/utils/index.js'
@@ -93,6 +94,135 @@ describe('utils', () => {
 
     for (const test of tests) {
       expect(hasRegistryPrefix(test.got)).to.equal(test.want)
+    }
+  })
+
+  it('Parses git remote repo paths', () => {
+    const tests: {got: string; want: {context: string; gitURL: string; isGitRemoteRepo: boolean}}[] = [
+      {
+        got: 'https://github.com/nodeshift/mern-workshop',
+        want: {
+          context: '.',
+          gitURL: 'https://github.com/nodeshift/mern-workshop',
+          isGitRemoteRepo: true,
+        },
+      },
+      {
+        got: 'https://github.com/nodeshift/mern-workshop:backend',
+        want: {
+          context: 'backend',
+          gitURL: 'https://github.com/nodeshift/mern-workshop',
+          isGitRemoteRepo: true,
+        },
+      },
+      {
+        got: 'https://github.com/user/repo.git:path/to/subdir',
+        want: {
+          context: 'path/to/subdir',
+          gitURL: 'https://github.com/user/repo.git',
+          isGitRemoteRepo: true,
+        },
+      },
+      {
+        got: 'http://example.com/user/repo.git',
+        want: {
+          context: '.',
+          gitURL: 'http://example.com/user/repo.git',
+          isGitRemoteRepo: true,
+        },
+      },
+      {
+        got: 'git://github.com/user/repo.git',
+        want: {
+          context: '.',
+          gitURL: 'git://github.com/user/repo.git',
+          isGitRemoteRepo: true,
+        },
+      },
+      {
+        got: 'ssh://git@github.com/user/repo.git',
+        want: {
+          context: '.',
+          gitURL: 'ssh://git@github.com/user/repo.git',
+          isGitRemoteRepo: true,
+        },
+      },
+      {
+        got: 'ssh://git@github.com/user/repo.git:apps/api',
+        want: {
+          context: 'apps/api',
+          gitURL: 'ssh://git@github.com/user/repo.git',
+          isGitRemoteRepo: true,
+        },
+      },
+      {
+        got: 'https://github.com/user/repo.git:foo:bar',
+        want: {
+          context: 'foo',
+          gitURL: 'https://github.com/user/repo.git',
+          isGitRemoteRepo: true,
+        },
+      },
+      {
+        got: '.',
+        want: {
+          context: '.',
+          gitURL: '',
+          isGitRemoteRepo: false,
+        },
+      },
+      {
+        got: './src',
+        want: {
+          context: '.',
+          gitURL: '',
+          isGitRemoteRepo: false,
+        },
+      },
+      {
+        got: '/home/user/project',
+        want: {
+          context: '.',
+          gitURL: '',
+          isGitRemoteRepo: false,
+        },
+      },
+      {
+        got: '/test/unit/testdata/node-app.git:sub-dir',
+        want: {
+          context: 'sub-dir',
+          gitURL: '',
+          isGitRemoteRepo: false,
+        },
+      },
+      {
+        got: 'git@github.com:user/repo.git',
+        want: {
+          context: 'user/repo.git',
+          gitURL: '',
+          isGitRemoteRepo: false,
+        },
+      },
+      {
+        got: 'not-a-url',
+        want: {
+          context: '.',
+          gitURL: '',
+          isGitRemoteRepo: false,
+        },
+      },
+      {
+        got: '',
+        want: {
+          context: '.',
+          gitURL: '',
+          isGitRemoteRepo: false,
+        },
+      },
+    ]
+
+    for (const test of tests) {
+      expect(parseGitRemoteRepo(test.got)).to.deep.equal(test.want)
     }
   })
 

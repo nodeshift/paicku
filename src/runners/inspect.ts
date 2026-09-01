@@ -132,7 +132,7 @@ export async function runInspect(
   const result = await subprocess
 
   if (result.failed) {
-    console.error(`inspect failed.`, {exit: result.exitCode ?? 1})
+    console.error('Inspect failed.', {command: result.command, exit: result.exitCode ?? 1})
   }
 
   const {data, parseError} = options.output === 'json' ? parseCommandJsonOutput(result.stdout ?? '') : {data: null}

@@ -106,7 +106,7 @@ export async function runBuild(
     console.error(`The builder "${flags.builder}" must be prefixed with a registry (e.g. "docker.io/" or "ghcr.io/").`)
   }
 
-  const {context, gitURL, isGitRemoteRepo} = await parseGitRemoteRepo(flags.path ?? '.')
+  const {context, gitURL, isGitRemoteRepo} = parseGitRemoteRepo(flags.path ?? '.')
   if (isGitRemoteRepo) {
     const clonedAppDir = await cloneRepo(gitURL, cacheDir, console.log, console.error)
     flags.path = path.join(clonedAppDir, context)
@@ -150,7 +150,7 @@ export async function runBuild(
   const result = await subprocess
 
   if (result.failed) {
-    console.error(`Build failed.`, {exit: result.exitCode ?? 1})
+    console.error('Build failed.', {command: result.command, exit: result.exitCode ?? 1})
   }
 
   return {

@@ -1,6 +1,6 @@
 import {lookpath} from 'lookpath'
 import {execFileSync, spawn} from 'node:child_process'
-import {existsSync, lstatSync, mkdirSync, mkdtempSync} from 'node:fs'
+import {existsSync, mkdirSync, mkdtempSync} from 'node:fs'
 import path, {join} from 'node:path'
 import url from 'node:url'
 
@@ -110,50 +110,17 @@ export function parseFlags(flags: Flags): string[] {
   return flagsArray
 }
 
-export async function parseGitRemoteRepo(
+export function parseGitRemoteRepo(
   path: string,
-): Promise<{context: string; gitURL: string; isGitRemoteRepo: boolean}> {
+): {context: string; gitURL: string; isGitRemoteRepo: boolean} {
   // If is a URL extract the context
   const [urlOrPath, context = '.'] = path.split(/:(?!\/\/)/)
-  const url = parseURL(urlOrPath)
-  if (url) {
-    try {
-      // Validate is a git repository
-      execFileSync('git', ['ls-remote', '--heads', urlOrPath, 'HEAD'])
-      return {context, gitURL: url.href, isGitRemoteRepo: true}
-    } catch (error) {
-      if (error instanceof Error) {
-        throw new TypeError(error.message)
-      }
-
-      throw new Error('The provided URL is not a git repository')
-    }
+  const isURL = parseURL(urlOrPath)
+  if (isURL) {
+    return {context, gitURL: isURL.href, isGitRemoteRepo: true}
   }
 
-  let isDir
-  try {
-    isDir = lstatSync(urlOrPath).isDirectory()
-  } catch {
-    isDir = false
-  }
-
-  // If is not a directory, is a tar or a tgz file, or an invalid path
-  // In that case we let pack throw the error
-  if (!isDir) {
-    return {context, gitURL: '', isGitRemoteRepo: false}
-  }
-
-  // We want to validate if the directory is a local repository or a local remote repository
-  const remotes = execFileSync('git', ['-C', urlOrPath, 'remote', '-v'])
-
-  // Heuristic way:
-  // If it has at least one remote 99.9% is a local repository
-  if (remotes.length > 0) {
-    return {context: '', gitURL: '', isGitRemoteRepo: false}
-  }
-
-  // Otherwise is a local remote repository
-  return {context, gitURL: urlOrPath, isGitRemoteRepo: true}
+  return {context, gitURL: '', isGitRemoteRepo: false}
 }
 
 export function gitIsInstalled(): boolean {
