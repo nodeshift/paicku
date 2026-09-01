@@ -1,63 +1,81 @@
 # Paicku
 
-Paicku is a Node.js wrapper around Cloud Native Buildpacks' [pack CLI](https://github.com/buildpacks/pack). It turns your app into a container image from the command line, or from a test, without you installing pack yourself.
+Paicku, is a Node.js library and command-line application for containerizing applications with buildpacks. It is a wrapper around Cloud Native Buildpacks' [pack CLI](https://github.com/buildpacks/pack).
 
-- **CLI and library.** Run `npx paicku build`, or call `await paicku.build()` from Node.js to build, start, and test your containerized application.
-- **Docker or Podman.** Uses whichever runtime is installed; pin one with `--container-runtime`.
-- **No pack install.** Downloads pack into the CLI cache on first run.
-- **Defaults that produce an image.** A random image name and the Paketo builder `docker.io/paketobuildpacks/builder-ubi8-base` if you omit them.
-- **Node.js >= 22**
+## Why?
 
-## Getting started
+- **Zero setup.** Automatically downloads the official `pack` binary on the first run.
+- **Zero configuration.** Automatically detects your running container daemon (Docker or Podman) based on the OS and configures it.
+- **End-to-End Testing.** Allows you to build and run containers with Node.js, to write robust integration tests.
+- **TypeScript Ready.** First-class TypeScript support with native type definitions included out of the box.
+- **Choose runtime.** Allows you to specify which container runtime would like to use, just by specifying the corresponding argument.
 
-### Library
+## Installation
+
+You can install Paicku globally through npm, yarn, or pnpm. Alternatively, drop the global flag (`global`/`-g`) to use it in your Node.js project.
 
 ```sh
-npm install paicku --save-dev
+# npm
+npm install -g paicku
+
+# yarn
+yarn global add paicku
+
+# pnpm
+pnpm add -g paicku
 ```
 
-Without any testing framework
+## Usage
+
+We officially support two interfaces for Paicku:
+
+- Command-line application
+- Node.js library - For general use in Node.js.
+
+### Command-line Usage
+
+Containerizing an application
+
+```
+paicku build --path ./app
+```
+
+### Node.js library
+
+To use Paicku, ensure you've installed the depenency, then import the `createPaicku` object.
+
+Here's a minimal example
 
 ```javascript
 import {createPaicku} from 'paicku'
 
 const paicku = createPaicku()
 
-// returns your containerized application image
+//  Build your containerized application image
 const image = await paicku.build({path: './app'})
 
-// run the image using testcontainers - https://testcontainers.com
+// Run the image
 const container = await image.run({exposedPorts: 8080})
 
 try {
-  // Do a request to the running container application
+  // Make a request to the running container application
   const response = await fetch(container.getUrl())
 
   // Print the response
   console.log(await response.text())
 } finally {
+  // Always clean up
   await container.stop()
 }
 ```
 
-See [examples/programmatic/](examples/programmatic/) for complete scripts.
-
-### CLI
-
-```sh
-npx paicku build --path ./app
-```
-
-Or install it globally
-
-```sh
-npm install -g paicku
-paicku build my-app-name --path ./app
-```
+**Note:** See [paicku examples](https://github.com/nodeshift-starters/paicku-examples/) for complete scripts.
 
 <!-- commands -->
 
-# Command Topics
+## Command Topics
+
+The ClI and Nodee.js library, support the following topics
 
 - [`paicku build`](docs/build.md) - Build an image
 - [`paicku builder`](docs/builder.md) - Display suggested builders for the given application
@@ -67,130 +85,154 @@ paicku build my-app-name --path ./app
 
 <!-- commandsstop -->
 
-## Examples
+## Node.js and CLI Examples
 
-With Mocha and SuperTest:
+### Writing tests with Mocha and SuperTest:
+
+Node.js
 
 ```javascript
 import {expect} from 'chai'
 import {after, before, describe, it} from 'mocha'
 import request from 'supertest'
-import {createPaicku} from 'paicku'
+import {createPaicku, PaickuError} from 'paicku'
 
-describe('my app', () => {
-  // Configure paicku
-  const paicku = createPaicku()
-  let image
-  let container
+describe('Mocha + Supertest', function () {
+  this.timeout(600_000) // Give some time for the build to complete
 
-  before(async () => {
-    // returns your containerized application image
-    image = await paicku.build({path: './app'})
-  })
+  describe('Build and Run a Node.js App', () => {
+    const paicku = createPaicku()
 
-  after(async () => {
-    await container?.stop()
-  })
+    let containerImage
+    let container
 
-  it('serves the homepage', async () => {
-    // run the image using testcontainers - https://testcontainers.com
-    container = await image.run({exposedPorts: 8080})
-    // do a request with supertest
-    const response = await request(container.getUrl()).get('/')
-    // evaluate the response
-    expect(response.status).to.equal(200)
+    before(async () => {
+      try {
+        containerImage = await paicku.build({
+          builder: 'docker.io/paketobuildpacks/ubuntu-noble-builder',
+          imageName: 'my-image-name', // omit in case your want to be a random name
+          path: './path',
+        })
+      } catch (error) {
+        if (error instanceof PaickuError) {
+          console.log(error.stderr)
+        }
+        throw error
+      }
+    })
+
+    after(async () => {
+      if (container) {
+        await container.stop()
+      }
+    })
+
+    it('should successfully build, start, and serve the application', async () => {
+      container = await containerImage.run({exposedPorts: 8080})
+      const response = await request(container.getUrl()).get('/')
+      expect(response.status).to.equal(200)
+    })
   })
 })
 ```
 
-See [examples/programmatic/](examples/programmatic/) for complete scripts.
+**Important:** Always pass `exposedPorts` when you need a URL, as there is no default port mapping.
 
-Configuring default behaviour of paicku
+### Configuring default behaviour of paicku
+
+You can optionally define a custom working directory or provide a local path to the pack executable if you prefer not to download the default one.
 
 ```javascript
 const paicku = createPaicku({
-  cwd: process.cwd(), // optional working directory for pack
-  executablePath: '/path/to/pack', // optional, otherwise default pack is downloaded
+  cwd: process.cwd(), // Optional: working directory for Paicku
+  executablePath: '/path/to/pack', // Optional: skips automatic download
 })
 ```
 
-Pass `exposedPorts` when you need a URL as there is no default port.
+### Selecting container runtime
 
-```javascript
-const container = await image.run({exposedPorts: 8080})
+You can choose which container runtime you prefer [docker or podman]:
 
-container.getUrl()
-container.getUrl({port: 9090, scheme: 'https'})
-await container.logs()
-await container.stop()
-```
-
-The folloing programmatic snippets assume `const paicku = createPaicku()`.
-
-### Build with Podman
+CLI:
 
 ```sh
 paicku build my-app --container-runtime podman
 ```
 
+Node.js:
+
 ```javascript
+const paicku = createPaicku()
+
 const result = await paicku.build({
   imageName: 'my-app',
   'container-runtime': 'podman',
 })
 ```
 
-### Build with a specific builder
+### Build with a specific builder and environement variables
+
+CLI:
 
 ```sh
-paicku build my-image --builder docker.io/paketobuildpacks/builder-ubi8-base
+paicku build nodejs-noble-container-image \
+    --builder docker.io/paketobuildpacks/ubuntu-noble-builder \
+    --run-image docker.io/paketobuildpacks/ubuntu-noble-run-tiny \
+    --env BP_LAUNCH_WITH_TINI=true
 ```
 
+Node.js:
+
 ```javascript
+const paicku = createPaicku()
+
 const result = await paicku.build({
-  imageName: 'my-image',
-  builder: 'docker.io/paketobuildpacks/builder-ubi8-base',
+  imageName: 'nodejs-noble-container-image',
+  builder: 'docker.io/paketobuildpacks/ubuntu-noble-builder',
+  runtImage: 'docker.io/aketobuildpacks/ubuntu-noble-run-tiny',
+  env: ['BP_LAUNCH_WITH_TINI=true'],
 })
 ```
 
-The builder must include a registry prefix (`docker.io/`, `ghcr.io/`, …).
+**Note:** The builder must include a registry prefix (`docker.io/`, `ghcr.io/`, …).
 
 ### Build from a remote Git repository
 
 Append `:<subdirectory>` to the Git URL when the app is not at the repository root.
 
+CLI:
+
 ```sh
 paicku build backend-image --path https://github.com/nodeshift/mern-workshop:backend
 ```
 
+Node.js:
+
 ```javascript
+const paicku = createPaicku()
+
 const result = await paicku.build({
   imageName: 'backend-image',
   path: 'https://github.com/nodeshift/mern-workshop:backend',
 })
 ```
 
-### Build with environment variables
+### Inspect a container image
+
+Inspect your application by using the inspect command
+
+CLI:
 
 ```sh
-paicku build my-app --env BP_NODE_VERSION=18.*
+paicku inspect my-containerized-app:latest --output json
 ```
+
+Node.js:
 
 ```javascript
-const result = await paicku.build({
-  imageName: 'my-app',
-  env: ['BP_NODE_VERSION=18.*'],
-})
-```
+const paicku = createPaicku()
 
-### Inspect a built image
-
-```sh
-paicku inspect my-image:latest --output json
-```
-
-```javascript
-const result = await paicku.inspect('my-image:latest', {
+const result = await paicku.inspect('my-containerized-app:latest', {
   output: 'json',
 })
 
@@ -199,30 +241,42 @@ console.log(result.parsedStdout)
 
 ### Suggest a builder
 
+CLI:
+
 ```sh
 paicku builder suggest
 ```
 
+Node.js:
+
 ```javascript
+const paicku = createPaicku()
+
 const result = await paicku.builder.suggest()
 console.log(result.stdout)
 ```
 
-### Download an SBOM
+### Download the SBOM
+
+CLI:
 
 ```sh
-paicku sbom download my-image:latest --output-dir ./sbom
+paicku sbom download my-containerized-app:latest --output-dir ./sbom
 ```
 
+Node.js:
+
 ```javascript
-await paicku.sbom.download('my-image:latest', {
+const paicku = createPaicku()
+
+await paicku.sbom.download('my-containerized-app:latest', {
   'output-dir': './sbom',
 })
 ```
 
 ## Contributing
 
-Contributions are welcome. Open a pull request.
+Contributions are welcome, feel free to open an issue or a pull request.
 
 ### Development
 
