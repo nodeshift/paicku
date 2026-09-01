@@ -5,7 +5,7 @@ import {tmpdir} from 'node:os'
 import {join} from 'node:path'
 
 import {setupFakePack} from '../../../utils/fake-pack.js'
-import ghServer from './../../../mocks/githubServer/server'
+import ghServer from './../../../mocks/githubServer/server.js'
 
 describe('inspect', () => {
   let tempDir: string

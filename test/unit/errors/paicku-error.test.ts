@@ -4,23 +4,23 @@ import {PaickuError} from '../../../src/errors/paicku-error.js'
 import {createRunnerConsole, throwOnConfirm} from '../../../src/types/index.js'
 
 describe('PaickuError', () => {
-  it('formats pack failures with exit code and warnings', () => {
+  it('formats pack failures with exit code and stores logs as properties', () => {
     const error = new PaickuError('Build failed.', {
       command: 'pack build my-image --no-color',
       exitCode: 7,
+      stderr: ['ERROR: failed to build'],
       stdout: ['Building image my-image'],
-      warnings: ['You have not specified a container runtime', 'ERROR: failed to build'],
+      warnings: ['You have not specified a container runtime'],
     })
 
     expect(error).to.be.instanceOf(Error)
     expect(error.name).to.equal('PaickuError')
     expect(error.exitCode).to.equal(7)
     expect(error.command).to.equal('pack build my-image --no-color')
+    expect(error.stderr).to.deep.equal(['ERROR: failed to build'])
     expect(error.stdout).to.deep.equal(['Building image my-image'])
-    expect(error.warnings).to.deep.equal(['You have not specified a container runtime', 'ERROR: failed to build'])
-    expect(error.message).to.equal(
-      'Build failed. (exit code 7)\n\nYou have not specified a container runtime\nERROR: failed to build',
-    )
+    expect(error.warnings).to.deep.equal(['You have not specified a container runtime'])
+    expect(error.message).to.equal('Build failed. (exit code 7)')
     expect(error.message).to.not.include('pack build my-image')
   })
 
@@ -29,6 +29,7 @@ describe('PaickuError', () => {
 
     expect(error.exitCode).to.equal(1)
     expect(error.command).to.be.undefined
+    expect(error.stderr).to.deep.equal([])
     expect(error.stdout).to.deep.equal([])
     expect(error.warnings).to.deep.equal([])
     expect(error.message).to.equal('The builder must be prefixed with a registry.')
@@ -37,7 +38,7 @@ describe('PaickuError', () => {
 
 describe('createRunnerConsole', () => {
   it('throws PaickuError with snapshotted logs and exit options', () => {
-    const logs = {log: ['stdout line'], warn: ['warn line']}
+    const logs = {error: ['stderr line'], log: ['stdout line'], warn: ['warn line']}
     const runnerConsole = createRunnerConsole(logs)
 
     try {
@@ -48,11 +49,11 @@ describe('createRunnerConsole', () => {
       const paickuError = error as PaickuError
       expect(paickuError.exitCode).to.equal(7)
       expect(paickuError.command).to.equal('pack build my-image')
+      expect(paickuError.stderr).to.deep.equal(['stderr line'])
       expect(paickuError.stdout).to.deep.equal(['stdout line'])
       expect(paickuError.warnings).to.deep.equal(['warn line'])
-      expect(paickuError.message).to.include('Build failed. (exit code 7)')
+      expect(paickuError.message).to.equal('Build failed. (exit code 7)')
       expect(paickuError.message).to.not.include('pack build my-image')
-      expect(paickuError.message).to.include('warn line')
     }
   })
 })
