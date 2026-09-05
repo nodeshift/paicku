@@ -1,5 +1,27 @@
 # Changelog
 
+## [0.3.0](https://github.com/nodeshift/paicku/compare/paicku-v0.2.0...paicku-v0.3.0) (2026-09-05)
+
+
+### Features
+
+* **deps:** update pack CLI from  to 0.40.7 ([ecad65a](https://github.com/nodeshift/paicku/commit/ecad65acbacae9c5537c68c915f639cb4849b213))
+* **deps:** update pack CLI from  to 0.40.8 ([a3276a9](https://github.com/nodeshift/paicku/commit/a3276a94938f49b072af0e68ad94ea10894895f9))
+* Throwing custom paickuErrors ([da8b217](https://github.com/nodeshift/paicku/commit/da8b217dc8ad25de4382ab449bab3af541f32728))
+
+
+### Bug Fixes
+
+* **deps:** bump pack CLI from 0.40.7 to ([cfdf32f](https://github.com/nodeshift/paicku/commit/cfdf32f415a65372cbab42974e3b2cb0eefdef32))
+* **deps:** bump pack CLI from 0.40.7 to 0.40.8 ([9fb3f11](https://github.com/nodeshift/paicku/commit/9fb3f111271b0949fc06e23c6820198f9499e1e1))
+* **deps:** bump pack CLI from 0.40.8 to ([8761883](https://github.com/nodeshift/paicku/commit/876188358e244723280eb02fdd8427e8f2696e28))
+* **deps:** bump pack CLI from 0.40.8 to 0.40.9 ([e16f52c](https://github.com/nodeshift/paicku/commit/e16f52c80cff4faeb10be202036cd87aa3af0da6))
+* exporting tools.json file for fetching pack version ([0a81ffe](https://github.com/nodeshift/paicku/commit/0a81ffef7ecb307a1f714ad506f68d21b5ab47ff))
+* fetching path based on the node process path ([f67cea3](https://github.com/nodeshift/paicku/commit/f67cea34b14c3c7e824ecdc9e00cbcf1cfbfa233))
+* simplifying parseGitRemote function ([9204b74](https://github.com/nodeshift/paicku/commit/9204b743495deb1446061262ac0a100905fe7863))
+* upgrading chain and mocha ([bf584ec](https://github.com/nodeshift/paicku/commit/bf584ec6d92126bf43673732af70b62cc34833dc))
+* upgrading pack cli github action flow ([0dc6dd2](https://github.com/nodeshift/paicku/commit/0dc6dd2d646f945411c6ff2000a5194d312527e8))
+
 ## [0.2.0](https://github.com/nodeshift/paicku/compare/paicku-v0.1.0...paicku-v0.2.0) (2026-07-02)
 
 
