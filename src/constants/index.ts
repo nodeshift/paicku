@@ -1,4 +1,4 @@
-export const CONTAINER_RUNTIMES_IN_PRIORITY = ['docker', 'podman']
+export const CONTAINER_RUNTIMES_IN_PRIORITY = ['podman', 'docker']
 
 export const CLONED_REPOS_TMP_DIRNAME = 'tmp-cloned-repos'
 

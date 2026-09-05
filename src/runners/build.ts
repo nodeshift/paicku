@@ -106,10 +106,13 @@ export async function runBuild(
     console.error(`The builder "${flags.builder}" must be prefixed with a registry (e.g. "docker.io/" or "ghcr.io/").`)
   }
 
-  const {context, gitURL, isGitRemoteRepo} = parseGitRemoteRepo(flags.path ?? '.')
+  const appPath = flags.path ?? '.'
+  const {context, gitURL, isGitRemoteRepo} = parseGitRemoteRepo(appPath)
   if (isGitRemoteRepo) {
     const clonedAppDir = await cloneRepo(gitURL, cacheDir, console.log, console.error)
     flags.path = path.join(clonedAppDir, context)
+  } else {
+    flags.path = path.isAbsolute(appPath) ? path.normalize(appPath) : path.resolve(appPath)
   }
 
   const flagsArray = parseFlags(flags)
