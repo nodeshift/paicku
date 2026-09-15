@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.3.1](https://github.com/nodeshift/paicku/compare/paicku-v0.3.0...paicku-v0.3.1) (2026-09-15)
+
+
+### Bug Fixes
+
+* **docs:** Some minor fixes on redme file ([912f62e](https://github.com/nodeshift/paicku/commit/912f62eb54d2c734b7a648fc24abf1b50379d1e7))
+* **docs:** Some minor fixes on redme file ([960ecb1](https://github.com/nodeshift/paicku/commit/960ecb16c5fa3b97c82189af7ed4dbaab3519967))
+
 ## [0.3.0](https://github.com/nodeshift/paicku/compare/paicku-v0.2.0...paicku-v0.3.0) (2026-09-05)
 
 
