@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.2](https://github.com/nodeshift/paicku/compare/paicku-v0.3.1...paicku-v0.3.2) (2026-10-22)
+
+
+### Bug Fixes
+
+* **deps:** bump pack CLI from 0.40.9 to 0.40.10 ([6af0ed5](https://github.com/nodeshift/paicku/commit/6af0ed567b4d3613d9f41a664498be6155b32038))
+
 ## [0.3.1](https://github.com/nodeshift/paicku/compare/paicku-v0.3.0...paicku-v0.3.1) (2026-09-15)
 
 
